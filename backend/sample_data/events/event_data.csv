@@ -1,0 +1,11 @@
+event_id,event_name,event_date,location,campaign_id
+1,Gala for good,1/21/2024,New York,1
+2,Charity Ball,2/28/2024,Los Angeles,1
+7,Spring Fundraiser,5/6/2024,Nashville,2
+8,Tee Up for Charity Golf Tournament,7/1/2024,Chicago,2
+3,Concert for a Cause,7/22/2024,Chicago,2
+6,Brunch & Benefit,8/10/2024,Boston,3
+5,Run for a Cause 5K,8/28/2024,Phoenix,3
+9,Community Cares Carnival,10/1/2024,Raleigh,4
+4,Auction of Hope,11/22/2024,Houston,4
+10,Christmas Fundraiser,12/23/2024,Portland,4

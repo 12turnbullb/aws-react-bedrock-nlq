@@ -1,0 +1,143 @@
+/* Chatbot.css */
+.chatbot-container {
+  width: 80%;
+  max-width: 800px; /* Set a max width for large screens */
+  height: 70vh; /* Set height relative to viewport */
+  margin: auto;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #f9f9f9;
+}
+
+.chatbot-header {
+  background: #007bff;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  font-weight: bold;
+}
+
+.chatbot-messages {
+  flex-grow: 1; /* Allows messages to take up remaining space */
+  padding: 15px;
+  overflow-y: auto;
+}
+
+.message {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.message.user {
+  justify-content: flex-end;
+}
+
+.message.bot {
+  justify-content: flex-start;
+}
+
+.message-text {
+  padding: 8px 12px;
+  border-radius: 10px;
+  max-width: 70%;
+}
+
+.message.user .message-text {
+  background: #007bff;
+  color: white;
+}
+
+.message.bot .message-text {
+  background: #e0e0e0;
+  color: black;
+}
+
+.show-sql {
+  margin-top: 5px;
+  color: blue;
+  cursor: pointer;
+}
+
+.chatbot-input-container {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #ddd; /* Adds a separator */
+  background: #fff;
+}
+
+.chatbot-input {
+  flex-grow: 1;
+  padding: 8px;
+  border: none;
+  outline: none;
+}
+
+.chatbot-send {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  cursor: pointer;
+}
+
+.chatbot-send:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Navbar Styling */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #007bff;
+  color: white;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.signout-button {
+  background: white;
+  color: #007bff;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.expandable-section {
+  margin-top: 5px;
+}
+
+.expand-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.expand-button:hover {
+  background-color: #0056b3;
+}
+
+.sql-query {
+  background: #f4f4f4;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 14px;
+  white-space: pre-wrap;
+}

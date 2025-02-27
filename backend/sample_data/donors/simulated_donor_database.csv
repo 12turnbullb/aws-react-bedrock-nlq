@@ -1,0 +1,101 @@
+donor_id,first_name,last_name,city,state,zip_code,gender,age_group,income_level
+1,Chris,Davis,San Antonio,TX,77001,Female,36-45,$25k-$50k
+2,Emily,Taylor,San Antonio,CA,90001,Non-binary,56-65,$100k+
+3,Emily,Williams,Austin,CA,78201,Female,56-65,<$25k
+4,Emily,Miller,Austin,IL,92101,Female,65+,<$25k
+5,Laura,Taylor,New York,CA,73301,Female,36-45,$50k-$75k
+6,David,Smith,Dallas,IL,73301,Male,65+,$25k-$50k
+7,Michael,Davis,Los Angeles,AZ,77001,Male,56-65,<$25k
+8,Chris,Davis,New York,CA,10001,Female,56-65,$25k-$50k
+9,James,Davis,Austin,TX,85001,Male,56-65,$25k-$50k
+10,Chris,Garcia,Austin,IL,75201,Female,18-25,$75k-$100k
+11,David,Davis,New York,AZ,75201,Male,65+,$75k-$100k
+12,Sarah,Brown,San Antonio,TX,78201,Female,26-35,$75k-$100k
+13,James,Johnson,San Diego,AZ,85001,Non-binary,56-65,$75k-$100k
+14,Laura,Wilson,Philadelphia,TX,10001,Female,18-25,$25k-$50k
+15,James,Jones,Los Angeles,TX,73301,Female,18-25,<$25k
+16,Anna,Miller,Los Angeles,IL,19101,Non-binary,46-55,$100k+
+17,Michael,Taylor,San Antonio,TX,73301,Male,46-55,$75k-$100k
+18,Chris,Wilson,Los Angeles,TX,10001,Male,36-45,$50k-$75k
+19,James,Taylor,Austin,TX,92101,Non-binary,18-25,$25k-$50k
+20,Anna,Miller,Los Angeles,CA,75201,Male,18-25,$25k-$50k
+21,Michael,Miller,New York,AZ,73301,Non-binary,36-45,$100k+
+22,Michael,Taylor,Philadelphia,TX,60601,Male,36-45,$100k+
+23,James,Brown,Dallas,NY,77001,Male,56-65,<$25k
+24,James,Williams,Dallas,TX,78201,Non-binary,65+,$25k-$50k
+25,Jane,Garcia,Phoenix,PA,90001,Non-binary,26-35,$50k-$75k
+26,Anna,Taylor,Phoenix,TX,92101,Non-binary,56-65,$100k+
+27,Anna,Garcia,Chicago,TX,60601,Non-binary,65+,$50k-$75k
+28,Emily,Smith,Chicago,NY,75201,Non-binary,18-25,$50k-$75k
+29,David,Williams,New York,NY,19101,Male,46-55,$50k-$75k
+30,James,Brown,Los Angeles,CA,78201,Non-binary,56-65,$100k+
+31,Emily,Taylor,Houston,CA,19101,Male,56-65,$50k-$75k
+32,Laura,Taylor,Los Angeles,TX,75201,Non-binary,65+,$100k+
+33,Michael,Brown,Houston,AZ,19101,Non-binary,46-55,$25k-$50k
+34,Emily,Wilson,Los Angeles,TX,90001,Non-binary,65+,$25k-$50k
+35,Emily,Brown,Phoenix,PA,19101,Non-binary,36-45,$75k-$100k
+36,David,Brown,Houston,AZ,78201,Male,18-25,<$25k
+37,Chris,Smith,Dallas,CA,85001,Non-binary,26-35,<$25k
+38,Chris,Davis,Austin,AZ,19101,Female,18-25,<$25k
+39,Chris,Taylor,New York,CA,10001,Female,36-45,$75k-$100k
+40,Emily,Davis,San Diego,TX,77001,Female,26-35,$75k-$100k
+41,Laura,Wilson,Chicago,IL,92101,Non-binary,26-35,<$25k
+42,Sarah,Brown,San Diego,TX,10001,Male,36-45,$100k+
+43,David,Jones,Austin,AZ,19101,Male,46-55,$100k+
+44,Chris,Johnson,Chicago,CA,77001,Male,18-25,$50k-$75k
+45,Jane,Taylor,Chicago,CA,92101,Non-binary,18-25,$100k+
+46,John,Brown,Phoenix,CA,85001,Female,36-45,$25k-$50k
+47,David,Smith,Phoenix,TX,75201,Non-binary,65+,$75k-$100k
+48,Jane,Garcia,Houston,CA,78201,Male,56-65,$25k-$50k
+49,Chris,Jones,San Antonio,IL,10001,Male,46-55,<$25k
+50,John,Wilson,San Diego,CA,85001,Non-binary,65+,$100k+
+51,Emily,Williams,Dallas,AZ,92101,Male,18-25,$100k+
+52,Jane,Wilson,Philadelphia,CA,19101,Non-binary,18-25,$75k-$100k
+53,Chris,Williams,Austin,TX,73301,Male,65+,$75k-$100k
+54,Michael,Garcia,New York,IL,90001,Female,46-55,$100k+
+55,Emily,Taylor,Los Angeles,TX,60601,Female,36-45,$100k+
+56,Laura,Brown,Philadelphia,PA,10001,Female,56-65,$50k-$75k
+57,Chris,Brown,Chicago,CA,78201,Female,36-45,$50k-$75k
+58,Michael,Johnson,Houston,TX,75201,Male,36-45,<$25k
+59,Sarah,Brown,San Antonio,PA,60601,Female,36-45,$75k-$100k
+60,Michael,Smith,Phoenix,TX,78201,Male,36-45,$75k-$100k
+61,John,Wilson,Philadelphia,CA,90001,Female,18-25,$100k+
+62,Sarah,Johnson,Houston,TX,92101,Female,65+,$100k+
+63,David,Williams,Phoenix,NY,92101,Female,36-45,$100k+
+64,Michael,Wilson,Dallas,TX,92101,Female,26-35,$25k-$50k
+65,Jane,Smith,Chicago,IL,60601,Male,18-25,$75k-$100k
+66,Sarah,Brown,Dallas,CA,78201,Male,36-45,$100k+
+67,Laura,Brown,San Diego,TX,85001,Male,26-35,<$25k
+68,James,Wilson,Houston,TX,92101,Non-binary,56-65,$75k-$100k
+69,Emily,Johnson,Austin,IL,78201,Male,26-35,<$25k
+70,Chris,Jones,Los Angeles,TX,78201,Non-binary,26-35,$25k-$50k
+71,Chris,Wilson,Phoenix,IL,19101,Female,46-55,$100k+
+72,Sarah,Jones,Phoenix,AZ,85001,Male,36-45,$25k-$50k
+73,Anna,Jones,Phoenix,PA,77001,Male,26-35,$75k-$100k
+74,James,Johnson,Austin,TX,75201,Non-binary,46-55,<$25k
+75,Chris,Jones,San Antonio,TX,78201,Non-binary,26-35,$50k-$75k
+76,Laura,Taylor,Austin,TX,92101,Non-binary,36-45,$25k-$50k
+77,Sarah,Wilson,New York,AZ,73301,Male,46-55,<$25k
+78,Chris,Davis,Chicago,IL,19101,Non-binary,36-45,$75k-$100k
+79,Michael,Miller,Houston,TX,90001,Male,46-55,$100k+
+80,Sarah,Garcia,Dallas,IL,75201,Male,36-45,$75k-$100k
+81,Sarah,Williams,New York,IL,90001,Female,36-45,$75k-$100k
+82,Chris,Smith,Dallas,AZ,77001,Female,46-55,$100k+
+83,John,Garcia,Austin,AZ,19101,Non-binary,46-55,$50k-$75k
+84,Chris,Johnson,Phoenix,AZ,77001,Non-binary,56-65,<$25k
+85,David,Davis,Chicago,CA,10001,Non-binary,56-65,$75k-$100k
+86,Chris,Williams,Chicago,CA,75201,Non-binary,56-65,$75k-$100k
+87,Jane,Johnson,Dallas,TX,19101,Male,36-45,$100k+
+88,Anna,Smith,Dallas,TX,75201,Male,18-25,<$25k
+89,Michael,Davis,Philadelphia,CA,60601,Non-binary,18-25,$50k-$75k
+90,Jane,Davis,Austin,CA,10001,Male,18-25,$100k+
+91,Anna,Smith,San Diego,PA,78201,Male,65+,$100k+
+92,Michael,Brown,Houston,CA,85001,Female,56-65,$25k-$50k
+93,Sarah,Smith,Houston,CA,60601,Male,65+,$100k+
+94,James,Brown,Dallas,TX,90001,Non-binary,26-35,<$25k
+95,James,Brown,San Diego,CA,75201,Non-binary,36-45,$75k-$100k
+96,Laura,Davis,Houston,TX,73301,Non-binary,46-55,$75k-$100k
+97,Michael,Garcia,Los Angeles,AZ,90001,Non-binary,36-45,<$25k
+98,Sarah,Jones,New York,NY,73301,Male,46-55,$50k-$75k
+99,Emily,Davis,New York,TX,85001,Female,65+,$75k-$100k
+100,Chris,Williams,San Antonio,PA,92101,Non-binary,36-45,<$25k
