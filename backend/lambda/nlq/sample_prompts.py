@@ -3,8 +3,8 @@ Example SQL Queries:
 1. Query: What was the total donation amount for the New Year Kickstart campaign?
 
     select sum(d.donation_amount) as total_donation_amount
-    from donor_data.donations d 
-    left join donor_data.campaigns c on d.campaign_id = c.campaign_id
+    from sample_donations d 
+    left join sample_campaigns c on d.campaign_id = c.campaign_id
     where lower(campaign_name) like 'new year kickstart%'
     group by c.campaign_id, c.campaign_name
      
@@ -22,7 +22,7 @@ schemas = """
 
 ### **Table Schemas**
 
-**campaigns**
+**sample_campaigns**
 [
   {
     "Name": "campaign_id",
@@ -46,7 +46,7 @@ schemas = """
   }
 ]
 
-**donations**
+**sample_donations**
 [
   {
     "Name": "donor_id",
@@ -71,7 +71,7 @@ schemas = """
 ]
 
 
-**donors**
+**sample_donors**
 [
   {
     "Name": "donor_id",
@@ -111,7 +111,7 @@ schemas = """
   }
 ]
 
-**events**
+**sample_events**
 [
   {
     "Name": "event_id",
@@ -135,7 +135,7 @@ schemas = """
   }
 ]
 
-**registration**
+**sample_registration**
 [
   {
     "Name": "event_id",

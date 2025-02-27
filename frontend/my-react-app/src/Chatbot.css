@@ -1,3 +1,4 @@
+
 .page-container {
   display: flex;
   flex-direction: column;
@@ -92,7 +93,7 @@
   border-radius: 10px;
   background-color: #f1f1f1;
   position: relative;
-  max-width: 80%;
+  max-width: 100%;
 }
 
 .text-bubble.user {

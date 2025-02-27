@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as lambdaNodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as athena from 'aws-cdk-lib/aws-athena';
 import * as waf from "aws-cdk-lib/aws-wafv2";
 import * as agw from "aws-cdk-lib/aws-apigateway";
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -53,6 +54,7 @@ interface APIStackProps extends cdk.StackProps {
   tableName: string;
   athenaQueryBucketName: string;
   glueDatabaseName: string;
+  workgroupName: string;
 }
 
 export class APIStack extends cdk.Stack {
@@ -78,10 +80,11 @@ export class APIStack extends cdk.Stack {
       layers: [layer],
       timeout: cdk.Duration.seconds(300),
       environment: {
-        ATHENA_OUTPUT: props.athenaQueryBucketName, // use the S3 bucket created for Athena query results in our data stack
+        ATHENA_OUTPUT: `s3://${props.athenaQueryBucketName}`, // use the S3 bucket created for Athena query results in our data stack
         ATHENA_CATALOG: 'AwsDataCatalog', // use the default glue catalog
         ATHENA_DB: props.glueDatabaseName, // use the glue database created in our Data stack
-        TABLE_NAME: props.tableName //use the DynamoDB table name created in our Data stack
+        TABLE_NAME: props.tableName, //use the DynamoDB table name created in our Data stack
+        ATHENA_WORKGROUP: props.workgroupName // use the Athena workgroup created in our Data stack
       }
     });
     
@@ -175,6 +178,9 @@ export class APIStack extends cdk.Stack {
       defaultCorsPreflightOptions: {
         allowOrigins: agw.Cors.ALL_ORIGINS,
         allowMethods: agw.Cors.ALL_METHODS,
+      },
+      endpointConfiguration: {
+        types: [agw.EndpointType.REGIONAL], 
       },
     });
 

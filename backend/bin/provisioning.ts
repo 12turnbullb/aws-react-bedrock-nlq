@@ -23,5 +23,6 @@ new APIStack(app, "APIStack", {
   tableName: data.tableName,
   athenaQueryBucketName: data.athenaQueryBucketName,
   glueDatabaseName: data.glueDatabaseName,
+  workgroupName: data.workgroupName,
   env,
 });

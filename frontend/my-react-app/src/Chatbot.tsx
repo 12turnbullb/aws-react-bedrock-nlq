@@ -64,15 +64,30 @@ const Agent: React.FC<AgentProps> = ({ generated_uuid }) => {
       
     // API call to NLQ lambda function, return response and raw SQL 
       const response = await postMessage(data);
-    
+      
+      // Check if the request was successful
+      if (!response.success) {
+        throw new Error(response.message); // Throw error to be caught in catch block
+      }
+      
       const botMessage: Message = {
         sender: 'bot',
-        text: response.answer,
-        sql: response.sql_query,
+        text: response.data.answer,
+        sql: response.data.sql_query,
       };
       setMessages((prevMessages) => [...prevMessages, botMessage]);
+      
     } catch (error) {
-      console.error('Error fetching bot response:', error);
+      
+      // sends error message to chatbot to surface to users
+      const botErrorMessage: Message = {
+        sender: 'bot',
+        text: error.message || "Something went wrong. Please try again.",
+        sql: "",
+      };
+
+      setMessages((prevMessages) => [...prevMessages, botErrorMessage]);
+      
     } finally {
       setIsLoading(false);
     }

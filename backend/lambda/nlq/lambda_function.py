@@ -1,24 +1,21 @@
 import json
 import boto3
-import json
-import sys
 import logging
 import os
 import time
 import sample_prompts as Prompts
-import io
-import re
-import urllib.parse
 import sqlalchemy as sa
 from sqlalchemy import create_engine, text
 from botocore.exceptions import ClientError
 from botocore.config import Config
 
-### USER INPUTS ####
+### ENV VARIABLES ####
 
-athena_results_s3 = os.environ.get('ATHENA_OUTPUT') # "s3://npo-all-hands-nlq-2024/athena_output" 
-athena_catalog = os.environ.get('ATHENA_CATALOG') #"AwsDataCatalog" 
-db_name = os.environ.get("ATHENA_DB") #"fifa"
+athena_results_s3 = os.environ.get('ATHENA_OUTPUT')
+athena_catalog = os.environ.get('ATHENA_CATALOG') 
+db_name = os.environ.get("ATHENA_DB")
+athena_workgroup = os.environ.get('ATHENA_WORKGROUP')
+table_name = os.environ.get('TABLE_NAME')
 
 ### CONFIG ###
 
@@ -35,8 +32,6 @@ athena_client = session.client('athena',config=retry_config)
 s3_client = session.client('s3',config=retry_config)
 
 dynamodb = boto3.resource('dynamodb')
-
-table_name = os.environ.get('TABLE_NAME')
 table = dynamodb.Table(table_name)
 
 ######################## STEP 1 #######################
@@ -64,7 +59,7 @@ def get_relevant_metadata(user_query):
 ##################### STEP 2 #######################
 #### USE THE RETREIVED METADATA TO GENERATE SQL ####
 
-def generate_sql(user_query, id) ->str:
+def generate_sql(user_query, id):
     
     conversation_history = []
     conversation_history = read_history_from_dynamodb(table, id)
@@ -97,7 +92,7 @@ def generate_sql(user_query, id) ->str:
     while attempt < max_attempts:
         # Generate a SQL query and test the quality against athena
         try: 
-            logger.info(f'we are in Try block to generate the sql and count is :{attempt+1}')
+            logger.info(f'Attempt {attempt+1}: Generating SQL')
                         
             # Pass user input to bedrock which generates sql 
             output_message, response = call_bedrock(prompt, conversation_history)
@@ -111,10 +106,10 @@ def generate_sql(user_query, id) ->str:
             # check the quality of the SQL query
             syntaxcheckmsg=syntax_checker(query)
             
-            print(" ################## SYNTAX CHECKER: ", syntaxcheckmsg)
+            logger.info(f"Syntax Checker: {syntaxcheckmsg}")
             
             if syntaxcheckmsg=='Passed':
-                logger.info(f'syntax checked for query passed in attempt number :{attempt+1}')
+                logger.info(f'Syntax check passed on attempt {attempt+1}')
                 
                 # If the query passes, add details to the conversation history
                 # Append the output message to the list of messages.
@@ -126,10 +121,10 @@ def generate_sql(user_query, id) ->str:
                 convo_holder = create_convo_message(conversation_history)
                 write_history_to_dynamodb(convo_holder, table, id)
                 
-                return query
+                return {"success": True, "sql_query": query}
             else: 
                 # reset the value of prompt with a new prompt and the latest query
-                prompt = f"""{prompt}
+                prompt += f"""
                 This is the syntax error: {syntaxcheckmsg}. 
                 To correct this, please generate an alternative SQL query which will correct the syntax error.
                 The updated query should take care of all the syntax issues encountered.
@@ -141,12 +136,10 @@ def generate_sql(user_query, id) ->str:
                 attempt +=1 
                 
         except Exception as e:
-            logger.error(f'FAILED: {e}')
-            attempt +=1 
-
-            return "The query has failed. Please rephrase your question to attempt another query."
-            
-    return query
+            logger.error(f"SQL Generation Failed: {str(e)}")
+            return {"success": False, "answer": str(e), "sql_query": ""}
+    
+    return {"success": False, "answer": "SQL query generation failed after maximum retries.", "sql_query": ""}
 
 ################### STEP 2 (HELPER FUNCTIONS) #####################
 
@@ -204,6 +197,7 @@ def syntax_checker(query):
             QueryString=query,
             ResultConfiguration=query_config,
             QueryExecutionContext=query_execution_context,
+            WorkGroup =athena_workgroup
         )
     
         execution_id = response["QueryExecutionId"]
@@ -292,8 +286,6 @@ def create_convo_message(history):
 #### EXECUTE THE GENERATED SQL AGAINST YOUR DATABASE ####
 
 def execute_sql(sql):
-    db_error=None
-    final = ""
     try: 
         athena_connection_str = f'awsathena+rest://:@athena.{athena_region}.amazonaws.com:443/{db_name}?s3_staging_dir={athena_results_s3}&catalog_name={athena_catalog}'
         # Create Athena engine
@@ -303,48 +295,38 @@ def execute_sql(sql):
         with engine.connect() as connection:
             result = connection.execute(text(sql))
             rows = result.all()
-            final = str(rows)
-        print("SUCCESSFUL EXECUTION")
+            logger.info('SQL Execution Successful')
+            return {"success": True, "result": str(rows)}
     
     except Exception as e:
-        print("ERROR ON EXECUTION")
-        logger.error({e})
-    return final
-
+        logger.error(f"SQL Execution Failed: {str(e)}")
+        return {"success": False, "answer": f"SQL execution failed: {str(e)}", "sql_query": sql}
 
 ###################### STEP 4 ########################
 #### SHOWCASE THE SQL RESULTS IN NATURAL LANGUAGE ####
 
-def final_output(input, id):
-    
-    # the query comes through the API as encoded. Decode it to view in plain text. 
-    user_query = urllib.parse.unquote(input)
-
+def final_output(user_query, id):
+     
     conversation_history = []
     conversation_history = read_history_from_dynamodb(table, id)
-    
+
     final_query = generate_sql(user_query, id)
-    
-    print("FINAL GENERATED QUERY: ", final_query)
-    
-    # if query_status == 0:
-    #     output = """I'm sorry, I'm unable to generate a query to answer your question. 
-    #     This could be due to an unclear question, or reference to information that doesn't exist in your dataset. 
-    #     Please rephrase your question to attempt another query."""
-    
-        
-    results = execute_sql(final_query)
-    
-    print(" SQL QUERY RESULTS: ", results)
 
+    # if the generate SQL function failed, then raise exception
+    if not final_query["success"]:
+        raise Exception(final_query["answer"])
 
-    # You are a helpful assistant providing users with information based on database 
-    # results. Your goal is to answer questions conversationally, summarizing the data
-    # clearly and concisely. When appropriate, share your insights on the result trends
-    # and offer high level analysis. When possible, display the results in a table using
-    # markdown syntax, and provide a short summary first. Avoid mentioning that the 
-    # data comes from a SQL query, and focus on giving direct, natural responses 
-    # to the user's question. 
+    logger.info(f"FINAL GENERATED QUERY: {final_query}")
+    
+    results = execute_sql(final_query["sql_query"])
+
+    # if the SQL execution failed, then raise exception
+    if not results["success"]:
+        raise Exception(results["answer"])
+
+    logger.info(f"SQL QUERY RESULTS: {results}")
+
+    sql_results = results["result"]
     
     prompt = f"""
     You are a helpful assistant providing users with information based on database 
@@ -369,12 +351,12 @@ def final_output(input, id):
     
     Question: {user_query}
     
-    Results: {results}
+    Results: {sql_results}
     """
     
     output_message, output = call_bedrock(prompt, conversation_history)
     
-    print("OUTPUT FROM BEDROCK: ", output)
+    logger.info(f"OUTPUT FROM BEDROCK: {output}")
     
     # Create a new output for our conversation history that combines 
     # the SQL query with the summarized results for context. 
@@ -407,18 +389,9 @@ def lambda_handler(event, context):
     prompt = body.get('message')
     generated_uuid = body.get('id')
     
-    # Extract path parameters from the API Gateway event
-    #path_parameters = event.get('pathParameters', {})
-    
-    # Extract specific values from the path
-    #encodedPrompt = path_parameters.get('input', '')
-    #generated_uuid = path_parameters.get('id', '')
-    
-    #output = {"answer": "THIS IS A SAMPLE ANSWER", "sql_query": "THIS IS A SAMPLE SQL QUERY"}
-    
-    output = final_output(prompt, generated_uuid)
-    
     try:
+        output = final_output(prompt, generated_uuid)
+
         # Return the response expected by API Gateway
         return {
             'statusCode': 200,
@@ -429,8 +402,8 @@ def lambda_handler(event, context):
             'body': json.dumps(output)
         }
     except Exception as e:
-        # Log the error
-        print(f"Error: {str(e)}")
+
+        logger.error(f"Error: {str(e)}")
         
         return {
             'statusCode': 500,
@@ -438,6 +411,6 @@ def lambda_handler(event, context):
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*',  # Enable CORS
             },
-            'body': json.dumps({'message': 'Internal Server Error', 'error': str(e)})
+            'body': json.dumps({"answer": str(e), "sql_query": ""})
         }
     

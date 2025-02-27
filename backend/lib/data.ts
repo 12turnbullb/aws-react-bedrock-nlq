@@ -62,7 +62,7 @@ export class DataStack extends cdk.Stack {
     public readonly athenaQueryBucketName: string;
     public readonly glueDatabaseName: string;
     public readonly sampleDataBucket: s3.Bucket;
-    public readonly workgroup: athena.CfnWorkGroup;
+    public readonly workgroupName: string;
 
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
@@ -156,6 +156,8 @@ export class DataStack extends cdk.Stack {
             },
           },
         });
+        
+        this.workgroupName = workgroup.ref
         
         // Prevent direct deletion of the workgroup until explicitly removed by the custom resource (recusively empties query history then deletes)
         workgroup.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
