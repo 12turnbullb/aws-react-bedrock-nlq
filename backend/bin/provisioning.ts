@@ -7,13 +7,14 @@ import { DataStack } from "../lib/data";
 
 const app = new cdk.App();
 const env = {
-  region: "us-east-1",
+  region: "us-east-1", //select the deployment region for resources
 };
+
 // Create the authentication stack
 const auth = new AuthStack(app, "AuthStack", { env }); 
 
 //Create the data stack
-const data = new DataStack(app, "DataStack");
+const data = new DataStack(app, "DataStack", { env });
 
 //Create the API stack
 //Pass in resource context from previous stacks

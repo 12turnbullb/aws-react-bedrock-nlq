@@ -10,6 +10,44 @@ import { Construct } from "constructs";
 import * as path from "path";
 
 
+/**
+ * API Stack
+ * 
+ * Purpose:
+ * Creates a secure API infrastructure with AWS API Gateway, Lambda, WAF protection,
+ * and Cognito authentication integration. Our Lambda includes Natural Language Query (NLQ) capabilities
+ * using AWS Athena and Bedrock.
+ * 
+ * Resources Created:
+ * 
+ * 1. API Gateway:
+ *    - REST API with CORS enabled
+ *    - Protected by Cognito authorizer
+ * 
+ * 2. Lambda Function:
+ *    - NLQ Function:
+ *      - Custom layer for PyAthena and SQLAlchemy
+ *      - Permissions for S3, Athena, Glue, Bedrock, and DynamoDB
+ * 
+ * 3. WAF (Web Application Firewall):
+ *    - Restricts traffic that can access our API endpoint
+ *    - IP-based allowlist (set in cdk.json)
+ *    - AWS Managed Rules:
+ *      - Common Rule Set
+ *      - IP Rule Set for allowed ranges
+ * 
+ * 4. API Endpoints:
+ *    - POST /nlq: Natural Language Query endpoint
+ *    Endpoint requires Cognito authentication
+ * 
+ * Required Props:
+ * - userPool: Cognito User Pool for authentication
+ * - tableName: DynamoDB table name
+ * - athenaQueryBucketName: S3 bucket for Athena queries
+ * - glueDatabaseName: Glue database name for Athena
+ *
+ */
+ 
 interface APIStackProps extends cdk.StackProps {
   userPool: cognito.UserPool;
   tableName: string;
@@ -17,44 +55,33 @@ interface APIStackProps extends cdk.StackProps {
   glueDatabaseName: string;
 }
 
-
 export class APIStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: APIStackProps) {
     super(scope, id, props);
 
     const authorizer = new agw.CognitoUserPoolsAuthorizer(this, "Authorizer", {
-      cognitoUserPools: [props.userPool],
+      cognitoUserPools: [props.userPool], // pass in the user pool created in our Auth stack
     });
-
-    // Definition of lambda function
-    const getTimeFunction = new lambdaNodejs.NodejsFunction(this, "getTime", {
-      handler: "handler",
-      runtime: lambda.Runtime.NODEJS_20_X,
-      timeout: cdk.Duration.seconds(30),
-      memorySize: 512,
-      entry: "./lambda/time/get.ts",
-    });
-    
     
     // Create the Lambda layer
     const layer = new lambda.LayerVersion(this, 'MyLambdaLayer', {
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/layer')),
-      compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
+      compatibleRuntimes: [lambda.Runtime.PYTHON_3_12],
       description: 'PyAthena and SQLAlchemy layer to support Natural Language Query (NLQ) in Athena',
     });
     
     // Create the Lambda function
     const lambdaFn = new lambda.Function(this, 'MyLambdaFunction', {
-      runtime: lambda.Runtime.PYTHON_3_11,
-      handler: 'lambda_function.lambda_handler',  // Assumes your handler function is named 'lambda_handler'
+      runtime: lambda.Runtime.PYTHON_3_12,
+      handler: 'lambda_function.lambda_handler',  
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/nlq')), 
       layers: [layer],
       timeout: cdk.Duration.seconds(300),
       environment: {
-        ATHENA_OUTPUT: props.athenaQueryBucketName,
-        ATHENA_CATALOG: 'AwsDataCatalog',
-        ATHENA_DB: props.glueDatabaseName,
-        TABLE_NAME: props.tableName //use the DynamoDB table name created in a previous stack
+        ATHENA_OUTPUT: props.athenaQueryBucketName, // use the S3 bucket created for Athena query results in our data stack
+        ATHENA_CATALOG: 'AwsDataCatalog', // use the default glue catalog
+        ATHENA_DB: props.glueDatabaseName, // use the glue database created in our Data stack
+        TABLE_NAME: props.tableName //use the DynamoDB table name created in our Data stack
       }
     });
     
@@ -79,7 +106,9 @@ export class APIStack extends cdk.Stack {
       resources: ['*']
     }));
 
-    // Definition of WAF
+    // Create a Web Application Firewall (WAF) to restrict traffic to our API endpoint 
+    
+    // Retrieve IP ranges from the CDK context (cdk.json)
     const ipRanges: string[] = scope.node.tryGetContext(
       "allowedIpAddressRanges"
     );
@@ -91,6 +120,7 @@ export class APIStack extends cdk.Stack {
       addresses: ipRanges,
     });
 
+    // Create Web Access Control List (ACL)
     const apiWaf = new waf.CfnWebACL(this, "waf", {
       defaultAction: { block: {} },
       scope: "REGIONAL",
@@ -118,6 +148,7 @@ export class APIStack extends cdk.Stack {
           },
         },
         // AWSManagedRulesKnownBadInputsRuleSet
+        // Only allow traffic from the IPs defined in our IP ranges
         {
           priority: 2,
           name: "BackendWebAclIpRuleSet",
@@ -156,13 +187,6 @@ export class APIStack extends cdk.Stack {
       resourceArn: `arn:aws:apigateway:${region}::/restapis/${restApiId}/stages/${stageName}`,
     });
 
-    // GET: /time
-    const userinfo = api.root.addResource("time");
-    userinfo.addMethod("GET", new agw.LambdaIntegration(getTimeFunction), {
-      authorizer: authorizer,
-      authorizationType: agw.AuthorizationType.COGNITO,
-    });
-    
     // POST: /nlq
     const userinfoNLQ = api.root.addResource("nlq");
     userinfoNLQ.addMethod("POST", new agw.LambdaIntegration(lambdaFn), {
