@@ -1,25 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import './Chatbot.css'; // Import the external CSS file
+import './Chatbot.css'; 
 import loadingGif from './assets/loading-gif.gif';
 import botAvatar from './assets/bot-avatar.png';
 import { Authenticator } from "@aws-amplify/ui-react";
 import { Amplify } from "aws-amplify";
 import "@aws-amplify/ui-react/styles.css";
-import { getTime } from "./api";
-import { postTime } from "./api";
+import { postMessage } from "./api";
 
 Amplify.configure({
   Auth:{
     Cognito: {
-      userPoolClientId: "5vgg1sato96m7fkr7beddk2amb",
-      userPoolId: "us-east-1_3WqN5CLia",
+      userPoolClientId: import.meta.env.VITE_CLIENT_ID,
+      userPoolId: import.meta.env.VITE_USER_POOL_ID,
     }
   }
 });
 
-export const apiEndpoint = "https://2v1k4dgpfl.execute-api.us-east-1.amazonaws.com"; // Please change this value.
+export const apiEndpoint = import.meta.env.VITE_API_ENDPOINT; 
 
 interface Message {
   sender: 'user' | 'bot';
@@ -31,8 +30,12 @@ interface AgentProps {
   generated_uuid: string;
 }
 
+interface MessageRequest {
+  message: string;
+  id: string; 
+}
+
 const Agent: React.FC<AgentProps> = ({ generated_uuid }) => {
-    
     
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>('');
@@ -53,14 +56,14 @@ const Agent: React.FC<AgentProps> = ({ generated_uuid }) => {
     try {
         
     // eventually sub in your API call from the API file
-    //submit your user message and unique ID to your API
-      const data: TimeRequest = {
+    // submit your user message and unique ID to your API
+      const data: MessageRequest = {
         message: input,
         id: generated_uuid
       };
       
     // API call to NLQ lambda function, return response and raw SQL 
-      const response = await postTime(data);
+      const response = await postMessage(data);
     
       const botMessage: Message = {
         sender: 'bot',
@@ -96,8 +99,9 @@ const Agent: React.FC<AgentProps> = ({ generated_uuid }) => {
         <h3>Welcome, {user?.username}!</h3>
         <button className="styled-button" onClick={signOut}>Sign Out</button>
       </div>
+      <div className = "chatbot-container">
       <div className="chatbot-overlay">
-        <div className="chatbot-title">YUSA Natural Language Query</div>
+        <div className="chatbot-title">Amazon Bedrock Natural Language Query</div>
         <div className="chat-container">
           <div className="chat-history" ref={chatHistoryRef}>
             {messages.map((message, index) => (
@@ -153,6 +157,7 @@ const Agent: React.FC<AgentProps> = ({ generated_uuid }) => {
             )}
           </form>
         </div>
+      </div>
       </div>
     </div>
     )}

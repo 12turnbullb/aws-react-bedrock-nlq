@@ -3,13 +3,34 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  height: 100%;
+  height: 100vh;
+}
+
+.button-group {
+  width: 100%;
+  z-index: 2000;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background-color: white;
+  padding: 10px 20px;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.chatbot-container {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100vh;
 }
 
 .chatbot-overlay {
   width: 90%;
-  max-width: 800px; /* Set a max width for large screens */
-  height: 70vh; /* Set height relative to viewport */
+  max-width: 800px;
+  height: 70vh;
+  margin-top: 20px;
   margin: auto;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -19,51 +40,29 @@
   background: #f9f9f9;
 }
 
-/* Title Bar */
 .chatbot-title {
   background-color: #007bff;
   color: white;
   padding: 10px;
   text-align: center;
-  font-size: 20px; /* Slightly larger font size */
+  font-size: 20px;
   font-weight: bold;
   border-radius: 8px 8px 0 0;
 }
 
-/* Toggle Button */
-.chatbot-toggle {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  z-index: 1001;
-  transition: transform 0.3s ease;
-}
-
-.chatbot-toggle.move-up {
-  transform: translateY(-620px); /* Adjust for the larger chat window */
-}
-
-/* Chat Container */
 .chat-container {
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 10px;
-  overflow: hidden; /* Prevents the container from overflowing */
+  overflow: hidden;
 }
 
-/* Chat History */
 .chat-history {
   flex-grow: 1;
-  overflow-y: auto; /* Enable scrolling */
+  overflow-y: auto;
   margin-bottom: 10px;
-  padding-right: 10px; /* Optional: Adds padding for scrollbar visibility */
+  padding-right: 10px;
 }
 
 .message {
@@ -88,55 +87,29 @@
   margin-right: 10px;
 }
 
-/* Text Bubble for Bot */
 .text-bubble.bot {
   padding: 10px;
   border-radius: 10px;
-  background-color: #f1f1f1; /* Light background for the bot message */
+  background-color: #f1f1f1;
   position: relative;
-  max-width: 80%; /* Adjust as needed */
+  max-width: 80%;
 }
 
-/* Text Bubble for User */
 .text-bubble.user {
   max-width: 70%;
   padding: 10px;
   border-radius: 15px;
-  background-color: #3399ff; /* Light cyan background for bot messages */
-  color: #FFFFFF; /* White text color */
+  background-color: #3399ff;
+  color: #FFFFFF;
 }
 
-.sources {
-  margin-top: 10px; /* Space between message text and sources */
-  font-size: 0.8rem; /* Slightly smaller font size for sources */
-}
-
-.source-item {
-  margin-bottom: 5px; /* Space between source items */
-}
-
-.source-link {
-  color: #007bff; /* Link color */
-  text-decoration: none; /* Remove underline */
-}
-
-.source-link:hover {
-  text-decoration: underline; /* Underline on hover */
-}
-
-.source-label {
-  color: #6c757d; /* Grey color for the label */
-  font-size: 0.8rem; /* Slightly smaller font size for the label */
-}
-
-/* Fixed Input Bar */
 .form {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
   padding: 5px 0;
-  border-top: 1px solid #ddd; /* Optional: Adds a border to separate input bar from chat history */
+  border-top: 1px solid #ddd;
   background-color: white;
 }
 
@@ -148,10 +121,9 @@
   font-size: 14px;
 }
 
-/* Button */
 .button {
   width: 48px;
-  height: 48px; /* Ensures the button is a square */
+  height: 48px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -162,14 +134,12 @@
   cursor: pointer;
   font-size: 14px;
   padding: 0;
-  position: relative; /* Ensure positioning for the loading GIF */
 }
 
 .button:disabled {
   cursor: not-allowed;
 }
 
-/* Loading GIF */
 .button-loading {
   width: 48px;
   height: 48px;
@@ -179,29 +149,26 @@
   border-radius: 5px;
   border: none;
   background-color: #F0F0F0;
-  position: relative;
 }
 
 .loading-gif {
-  width: 400px; /* Adjust size as needed */
-  height: 40px; /* Adjust size as needed */
+  width: 400px; 
+  height: 40px; 
 }
 
-/* Expand SQL Button */
 .expand-button {
   background-color: transparent;
   border: none;
   color: #007bff;
   cursor: pointer;
   font-size: 0.9rem;
-  margin-top: 10px; /* Space between answer and button */
+  margin-top: 10px;
 }
 
 .expand-button:hover {
   text-decoration: underline;
 }
 
-/* SQL Query */
 .sql-query {
   margin-top: 10px;
   padding: 10px;
@@ -211,15 +178,12 @@
   color: #333;
 }
 
-/* Style for both buttons */
 .styled-button {
   background-color: #004999;
   border: none;
   color: white;
   padding: 5px 10px;
   text-align: center;
-  text-decoration: none;
-  display: inline-block;
   font-size: 16px;
   margin: 4px 2px;
   cursor: pointer;
@@ -231,23 +195,6 @@
   background-color: #45a049;
 }
 
-/* Button group container */
-.button-group {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 2000;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  background-color: white;
-  padding: 10px 20px;
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-
-/* Style for markdown-generated tables */
 .markdown-content table {
   width: 80%;
   border-collapse: collapse;

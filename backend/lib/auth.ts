@@ -30,11 +30,8 @@ export class AuthStack extends cdk.Stack {
 
     const userPool = new cognito.UserPool(this, "UserPool", {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
-      // mfa: cognito.Mfa.REQUIRED,
-      // mfaSecondFactor: {
-      //   otp: true,
-      //   sms: false,
-      // },
+      selfSignUpEnabled: false,
+      accountRecovery: cognito.AccountRecovery.NONE, 
     });
 
     const client = userPool.addClient("WebClient", {

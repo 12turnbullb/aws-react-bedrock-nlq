@@ -1,5 +1,5 @@
 import { fetchAuthSession } from "@aws-amplify/auth";
-import { apiEndpoint } from "./App";
+import { apiEndpoint } from "./Chatbot";
 
 export const getToken = async () => {
   try {
@@ -16,35 +16,15 @@ export const getToken = async () => {
   }
 };
 
-interface Time {
-  cur_date: string;
+interface MessageRequest {
+  message: string;
+  id: string; 
 }
 
-export const getTime = async () => {
+export const postMessage = async (requestData: MessageRequest) => {
   try {
     const token = await getToken();
-        const res = await fetch(`${apiEndpoint}/api/time`, {
-      headers: {
-        "Authorization": token,
-        "Content-Type": "application/json",
-      },
-    });
-    
-    if (!res.ok) {
-      throw new Error(`API request failed with status ${res.status}`);
-    }
-
-    return (await res.json()) as Time;
-  } catch (error) {
-    console.error("Error fetching time:", error);
-    throw error;
-  }
-};
-
-export const postTime = async (requestData: TimeRequest) => {
-  try {
-    const token = await getToken();
-    const res = await fetch(`${apiEndpoint}/api/nlq`, {
+    const res = await fetch(`${apiEndpoint}/nlq`, {
       method: 'POST', // specify POST method
       headers: {
         "Authorization": token,
