@@ -103,6 +103,7 @@ export class APIStack extends cdk.Stack {
         'glue:GetPartition',
         'glue:GetPartitions',
         'glue:GetDatabase',
+        'glue:GetTables',
         'bedrock:*',
         'dynamodb:*'
       ],

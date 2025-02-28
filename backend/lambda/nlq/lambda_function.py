@@ -30,29 +30,43 @@ bedrock = session.client('bedrock-runtime', region_name=bedrock_region, config=r
 
 athena_client = session.client('athena',config=retry_config)
 s3_client = session.client('s3',config=retry_config)
+glue_client = session.client('glue', config=retry_config)
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(table_name)
 
-######################## STEP 1 #######################
-#### GRAB RELEVANT SCHEMA DETAILS FROM VECTORSTORE ####
+########################## STEP 1 ###############################
+#### GRAB RELEVANT SCHEMA DETAILS FROM AWS GLUE DATA CATALOG ####
 
 def get_relevant_metadata(user_query):
-    # question_db = FAISS.load_local(db_faiss_path, bedrock_embeddings, allow_dangerous_deserialization=True)
-    # results = question_db.similarity_search_with_score(user_query)
-    # #print(results)
-    # schema = {}
-    
-    # for doc, score in results:
-    #     table_name = doc.metadata['tableName']
-    #     table_schema = doc.metadata['tableSchema']
-    #     #summary = doc.metadata['summary']
-    #     schema[table_name] = {'schema': table_schema} #'summary': summary}
-        
-    #schema = {'students': {'schema': 'student_id|first_name|last_name|age|demographic|school_id'}, 'schools': {'schema': 'school_id|school_name|school_type|city|state'}}
-    
     schema = Prompts.schemas
-    
+
+    try:
+        # Get all tables in the database
+        response = glue_client.get_tables(DatabaseName=db_name)
+        tables = response.get("TableList", [])
+        
+        schema_details = {}
+
+        for table in tables:
+            table_name = table["Name"]
+            columns = table.get("StorageDescriptor", {}).get("Columns", [])
+
+            # Extract column details
+            schema_details[table_name] = [
+                {"Name": col["Name"], "Type": col["Type"]} for col in columns
+            ]
+ 
+        logger.info(f"Metadata retrieved: {schema_details}")
+        
+        return schema_details
+
+    except Exception as e:
+
+        errorMessage = f"Metadata retrieval Failed: {str(e)}"
+        logger.error(errorMessage)
+        raise Exception(errorMessage)
+
     return schema
 
 
@@ -86,7 +100,7 @@ def generate_sql(user_query, id):
     prompt = f"""\n\n{details}. <database_metadata> {vector_search_match} </database_metadata> <sample_queries> {Prompts.sample_queries} </sample_queries> <query> {user_query} </query>"""
 
     attempt = 0
-    max_attempts = 4
+    max_attempts = 3
     query = ''
 
     while attempt < max_attempts:
@@ -121,7 +135,7 @@ def generate_sql(user_query, id):
                 convo_holder = create_convo_message(conversation_history)
                 write_history_to_dynamodb(convo_holder, table, id)
                 
-                return {"success": True, "sql_query": query}
+                return query
             else: 
                 # reset the value of prompt with a new prompt and the latest query
                 prompt += f"""
@@ -137,9 +151,9 @@ def generate_sql(user_query, id):
                 
         except Exception as e:
             logger.error(f"SQL Generation Failed: {str(e)}")
-            return {"success": False, "answer": str(e), "sql_query": ""}
+            attempt +=1 
     
-    return {"success": False, "answer": "SQL query generation failed after maximum retries.", "sql_query": ""}
+    raise Exception("SQL query generation failed after maximum retries. Please try a different question.")
 
 ################### STEP 2 (HELPER FUNCTIONS) #####################
 
@@ -178,7 +192,10 @@ def call_bedrock(prompt, conversation_history):
         print("FINAL OUTPUT: ", answer)
     
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+
+        errorMessage = f"An error occurred calling Amazon Bedrock: {str(e)}"
+        logger.error(errorMessage)
+        raise Exception(errorMessage)
         
     return output_message, answer
 
@@ -222,7 +239,7 @@ def syntax_checker(query):
             
     except Exception as e:
         message = f'error {e}'
-    
+
     return message
     
 ################ DYNAMO DB CONVO HISTORY ################
@@ -296,11 +313,13 @@ def execute_sql(sql):
             result = connection.execute(text(sql))
             rows = result.all()
             logger.info('SQL Execution Successful')
-            return {"success": True, "result": str(rows)}
+            return str(rows)
     
     except Exception as e:
-        logger.error(f"SQL Execution Failed: {str(e)}")
-        return {"success": False, "answer": f"SQL execution failed: {str(e)}", "sql_query": sql}
+
+        errorMessage = f"SQL Execution Failed: {str(e)}"
+        logger.error(errorMessage)
+        raise Exception(errorMessage)
 
 ###################### STEP 4 ########################
 #### SHOWCASE THE SQL RESULTS IN NATURAL LANGUAGE ####
@@ -312,22 +331,12 @@ def final_output(user_query, id):
 
     final_query = generate_sql(user_query, id)
 
-    # if the generate SQL function failed, then raise exception
-    if not final_query["success"]:
-        raise Exception(final_query["answer"])
-
     logger.info(f"FINAL GENERATED QUERY: {final_query}")
     
     results = execute_sql(final_query["sql_query"])
 
-    # if the SQL execution failed, then raise exception
-    if not results["success"]:
-        raise Exception(results["answer"])
-
     logger.info(f"SQL QUERY RESULTS: {results}")
 
-    sql_results = results["result"]
-    
     prompt = f"""
     You are a helpful assistant providing users with information based on database 
     results. Your goal is to answer questions conversationally, summarizing the data
@@ -351,7 +360,7 @@ def final_output(user_query, id):
     
     Question: {user_query}
     
-    Results: {sql_results}
+    Results: {results}
     """
     
     output_message, output = call_bedrock(prompt, conversation_history)

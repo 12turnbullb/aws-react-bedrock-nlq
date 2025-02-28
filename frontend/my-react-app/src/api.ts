@@ -38,23 +38,23 @@ export const postMessage = async (requestData: MessageRequest) => {
     
     const responseData = await res.json();
     
+    // check for HTTP errors (400-599)
     if (!res.ok) {
-      // catches 500 errors from Lambda and passes them to catch
+      // pull custom error message from API response, if none provided then return generic error
+      // this is where I pull the answer from the JSON. 
       throw new Error(responseData?.answer || `API error: ${res.status} ${res.statusText}`);
     }
     
-    return { success: true, data: responseData }; 
+    return responseData;
     
   } catch (error: any) {
-    // for network errors (gateway timeouts, etc.) fetch will not return a response
-    console.error("Error posting message:", error);
     
-    const errorMessage =
-      error.message.includes("Failed to fetch") || error.message.includes("NetworkError")
-        ? "Network error: Unable to reach server. Please check your connection."
-        : error.message; // Return detailed error from API response
-
-    return { success: false, message: errorMessage };
+      // Throw an error instead of returning a failed response
+      throw new Error(
+        error.message.includes("Failed to fetch") || error.message.includes("NetworkError")
+          ? "Network error: Unable to reach server. Please check your connection."
+          : error.message
+      );
   }
 };
 
