@@ -20,7 +20,7 @@ There are three cdk stacks, which correspond to each row in the architecure belo
 - FrontendStack
   - Amazon CloudFront, AWS WAF, Amazon S3
 
-![Architecture](imgs/architecture.png)
+![Architecture](imgs/nlq-architecture.PNG)
 
 ## Directory Structures
 
