@@ -7,14 +7,16 @@ This sample shows how to make a SPA application with serverless backend by AWS C
 Screenshots of this demo are shown below.
 
 ![screen-cognito](imgs/screen-cognito.png)
-![screen-home](imgs/screen-home.png)
+![screen-home](imgs/app-preview.PNG)
 
 ## Architecture
 
-There are three cdk stacks, which correspond to each row in the architecure below.
+There are four cdk stacks:
 
 - AuthStack
   - Amazon Cognito
+- DataStack
+  - Amazon S3 bucket, Amazon DynamoDB, AWS Glue Crawlers, Amazon Athena
 - APIStack
   - Amazon API Gateway, AWS WAF, AWS Lambda
 - FrontendStack
@@ -79,7 +81,7 @@ AuthStack.apiEndpointxxx = xxx
 #### 3.1 Build React app
 
 - Run `npm install` command in the [frontend/web](frontend/web) directory.
-- Update `frontend/web/src/App.tsx` to use the previous outputs.
+- Update `frontend/web/.env.local` to use the previous outputs.
   - userPoolId
   - userPoolWebClientId
   - apiEndpoint
