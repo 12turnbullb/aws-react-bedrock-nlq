@@ -24,6 +24,29 @@ There are four cdk stacks:
 
 ![Architecture](imgs/nlq-architecture.PNG)
 
+1. AWS Glue crawls the data stores and adds schema and table metadata to the Glue data catalog. 
+
+2. The user is authenticated via Amazon Cognito. 
+
+3. The client fetches the static, single page application (SPA) hosted in S3. Client IPs are validated by the WAF. 
+
+4. The user submits a question through the React user interface.  
+
+5. The Cognito session authorizes a POST call to API Gateway. The WAF uses the standard ruleset to evaluate the traffic. 
+
+6. AWS Lambda receives the API gateway event and orchestrates the backend. 
+
+7. The conversation history is pulled from DynamoDB as context. 
+
+8. Amazon Bedrock uses the metadata from the data store + the user’s question as context to generate a SQL query. The SQL query is tested. If an error occurs, the LLM generates a new query and tests again. This retry loop can occur up to 3 times. 
+
+9. The generated SQL query is executed with Amazon Athena against the original data store. 
+
+10. The SQL query result is returned to Amazon Bedrock and is used as context to generate a conversational response to the user’s query. 
+
+11. The response is submitted through the front-end to the user. 
+
+
 ## Directory Structures
 
 ```sh
@@ -46,6 +69,8 @@ There are four cdk stacks:
 - react-scripts
 - ts-node
 - typescript
+
+# Deploying the solution
 
 ## Prerequisites
 
@@ -120,7 +145,12 @@ FrontendStack.endpoint = xxx.cloudfront.net
 - In order to sign in the app, you need to create a new cognito user. You can create a user by AWS Management Console or AWS CLI.
 
 
-## 
+## Experimenting with the Chatbot
+
+The sample dataset follows a dimensional model of synthetic donor data. Donation transactions are stored in a central fact table with auxillary information like donors, events, campaigns and payment method stored in dimension tables. 
+
+![donor-data-erd](imgs/donor-erd.PNG)
+
 
 
 ## Security
