@@ -84,9 +84,9 @@ There are four cdk stacks:
 
 - Navigate to the Amazon Bedrock console and select `Model Access` at the bottom of the left navigation pane. 
 - Select `Enable specific model access` or `Modify model access` if you've visited this setting before.
-- Check the `Claude 3 Sonnet` model under the Anthropic header. We'll use this model to generate SQL queries and return results in natural language. You are welcome to swap this model out for a model of your choice to test performance. 
+- Check the `Claude 3 Sonnet` model under the Anthropic header. We'll use this model to generate SQL queries and return results in natural language. You are welcome to swap in an Amazon Bedrock model of your choice in the environment variables of the API's Lambda function. 
 - Select `Next` and choose `Submit`. 
-- 
+
 ### 2. Clone the repository
 
 - Run `git clone` command to download the source code

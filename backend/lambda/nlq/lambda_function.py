@@ -16,6 +16,7 @@ athena_catalog = os.environ.get('ATHENA_CATALOG')
 db_name = os.environ.get("ATHENA_DB")
 athena_workgroup = os.environ.get('ATHENA_WORKGROUP')
 table_name = os.environ.get('TABLE_NAME')
+model_id = os.environ.get('MODEL_ID')
 
 ### CONFIG ###
 
@@ -177,8 +178,7 @@ def call_bedrock(prompt, conversation_history):
     try:
         # Call the converse method of the Bedrock client object to get a response from the model.
         response = bedrock.converse(
-            #modelId="us.anthropic.claude-3-5-sonnet-20240620-v1:0",
-            modelId = "us.anthropic.claude-3-sonnet-20240229-v1:0",
+            modelId = model_id, # Amazon Bedrock model ID loaded in from the environment variables
             messages=conversation_history,
             system=system_prompts,
             inferenceConfig={"temperature": temperature},
