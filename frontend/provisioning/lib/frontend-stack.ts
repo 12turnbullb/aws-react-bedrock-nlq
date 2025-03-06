@@ -53,8 +53,7 @@ export class FrontendStack extends cdk.Stack {
 
     new s3deploy.BucketDeployment(this, "WebsiteDeploy", {
       sources: [
-        //s3deploy.Source.asset(`${path.resolve(__dirname)}/../../web/build`),
-        s3deploy.Source.asset(`${path.resolve(__dirname)}/../../my-react-app/dist`),
+        s3deploy.Source.asset(`${path.resolve(__dirname)}/../../web/dist`),
       ],
       destinationBucket: websiteBucket,
       distribution: websiteDistribution,

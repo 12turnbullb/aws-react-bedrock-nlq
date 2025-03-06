@@ -39,7 +39,6 @@ table = dynamodb.Table(table_name)
 #### GRAB RELEVANT SCHEMA DETAILS FROM AWS GLUE DATA CATALOG ####
 
 def get_relevant_metadata(user_query):
-    schema = Prompts.schemas
 
     try:
         # Get all tables in the database
@@ -67,7 +66,7 @@ def get_relevant_metadata(user_query):
         logger.error(errorMessage)
         raise Exception(errorMessage)
 
-    return schema
+    return schema_details
 
 
 ##################### STEP 2 #######################
@@ -78,7 +77,7 @@ def generate_sql(user_query, id):
     conversation_history = []
     conversation_history = read_history_from_dynamodb(table, id)
 
-    vector_search_match=get_relevant_metadata(user_query)
+    schema_details = get_relevant_metadata(user_query)
     
     details = f"""
     Read database metadata inside the <database_metadata></database_metadata> tags to do the following:
@@ -97,7 +96,7 @@ def generate_sql(user_query, id):
 
     """
     
-    prompt = f"""\n\n{details}. <database_metadata> {vector_search_match} </database_metadata> <sample_queries> {Prompts.sample_queries} </sample_queries> <query> {user_query} </query>"""
+    prompt = f"""\n\n{details}. <database_metadata> {schema_details} </database_metadata> <sample_queries> {Prompts.sample_queries} </sample_queries> <query> {user_query} </query>"""
 
     attempt = 0
     max_attempts = 3
@@ -115,14 +114,14 @@ def generate_sql(user_query, id):
             query = response.split('<SQL>')[1].split('</SQL>')[0]
             query = ' '.join(query.split())
             
-            logger.info(f"Generated Query {attempt +1}: {query}")
+            logger.info(f"Generated Query #{attempt +1}: {query}")
             
             # check the quality of the SQL query
             syntaxcheckmsg=syntax_checker(query)
             
             logger.info(f"Syntax Checker: {syntaxcheckmsg}")
             
-            if syntaxcheckmsg=='Passed':
+            if syntaxcheckmsg=='PASSED':
                 logger.info(f'Syntax check passed on attempt {attempt+1}')
                 
                 # If the query passes, add details to the conversation history
@@ -138,8 +137,9 @@ def generate_sql(user_query, id):
                 return query
             else: 
                 # reset the value of prompt with a new prompt and the latest query
+
                 prompt += f"""
-                This is the syntax error: {syntaxcheckmsg}. 
+                This a syntax error from the originally generated SQL: {syntaxcheckmsg}. 
                 To correct this, please generate an alternative SQL query which will correct the syntax error.
                 The updated query should take care of all the syntax issues encountered.
                 Follow the instructions mentioned above to remediate the error. 
@@ -169,7 +169,7 @@ def call_bedrock(prompt, conversation_history):
     conversation_history.append(message)
     
     # Set the temperature for the model inference, controlling the randomness of the responses.
-    temperature = 0.5
+    temperature = 0.1
 
     # Set the top_k parameter for the model inference, determining how many of the top predictions to consider.
     top_k = 200
@@ -177,7 +177,8 @@ def call_bedrock(prompt, conversation_history):
     try:
         # Call the converse method of the Bedrock client object to get a response from the model.
         response = bedrock.converse(
-            modelId="anthropic.claude-3-sonnet-20240229-v1:0",
+            #modelId="us.anthropic.claude-3-5-sonnet-20240620-v1:0",
+            modelId = "us.anthropic.claude-3-sonnet-20240229-v1:0",
             messages=conversation_history,
             system=system_prompts,
             inferenceConfig={"temperature": temperature},
@@ -189,7 +190,7 @@ def call_bedrock(prompt, conversation_history):
         
         answer = output_message['content'][0]['text']
         
-        print("FINAL OUTPUT: ", answer)
+        logger.info(f"BEDROCK OUTPUT: {answer}")
     
     except Exception as e:
 
@@ -218,27 +219,34 @@ def syntax_checker(query):
         )
     
         execution_id = response["QueryExecutionId"]
+
+        logger.info(f"Query execution ID: {execution_id}")
         
         # Wait for the query to complete
-        response_wait = athena_client.get_query_execution(QueryExecutionId=execution_id)
-    
-        while response_wait['QueryExecution']['Status']['State'] in ['QUEUED', 'RUNNING']:
-            print("Query is still running...")
+        while True:
             response_wait = athena_client.get_query_execution(QueryExecutionId=execution_id)
+            state = response_wait['QueryExecution']['Status']['State']
+            
+            if state in ['QUEUED', 'RUNNING']:
+                logger.info("Query is still running...")
+                time.sleep(1)  # Add small delay to prevent too many API calls
+                continue
+            break
+            
+        logger.info(f"Query finished with state: {state}")
     
-        print(f'response_wait {response_wait}')
-    
-            # Check if the query completed successfully
-        if response_wait['QueryExecution']['Status']['State'] == 'SUCCEEDED':
-            return "Passed"
+        # Check if the query completed successfully
+        if state == 'SUCCEEDED':
+            return "PASSED"
         else:
-            print("Query failed!")
-            code = response_wait['QueryExecution']['Status']['State']
+            logger.error(f"Query failed syntax check")
             message = response_wait['QueryExecution']['Status']['StateChangeReason']
             return message
             
     except Exception as e:
-        message = f'error {e}'
+        errorMessage = f"An error occurred checking the SQL query syntax: {str(e)}"
+        logger.error(errorMessage)
+        raise Exception(errorMessage)
 
     return message
     
@@ -333,7 +341,7 @@ def final_output(user_query, id):
 
     logger.info(f"FINAL GENERATED QUERY: {final_query}")
     
-    results = execute_sql(final_query["sql_query"])
+    results = execute_sql(final_query)
 
     logger.info(f"SQL QUERY RESULTS: {results}")
 
@@ -371,7 +379,7 @@ def final_output(user_query, id):
     # the SQL query with the summarized results for context. 
     memory_output = {
     'role': 'assistant', 
-    'content': [{'text': " SQL QUERY: " + final_query + ". RESULTS: "+ output_message['content'][0]['text']}]
+    'content': [{'text': " SQL QUERY: " + final_query + ". RESULTS: "+ output}]
     }
     
     # Append the output message to the list of messages.

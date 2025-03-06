@@ -1,8 +1,8 @@
-# React SPA App with Serverless Backend and Congito Auth Demo
+# Natural Language Query with Amazon Bedrock (React SPA App)
 
 ## Overview
 
-This sample shows how to make a SPA application with serverless backend by AWS Cloud Development Kit (CDK). You can also see from this sample how to control access to API with Amazon Cognito and attach WAF to API Gateway and CloudFront.
+This sample shows how to make a React SPA application with AWS Cloud Development Kit (CDK) that hosts a chatbot for natural language query. 
 
 Screenshots of this demo are shown below.
 
