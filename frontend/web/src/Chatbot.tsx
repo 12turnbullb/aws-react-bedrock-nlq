@@ -102,12 +102,48 @@ const Agent: React.FC<AgentProps> = ({ generated_uuid }) => {
     <Authenticator>
       {({ signOut, user }) => (
     <div className = "page-container">
+      
       <div className="button-group">
         <button className="styled-button" onClick={() => window.location.reload()}>Refresh</button>
         <h3>Welcome, {user?.username}!</h3>
         <button className="styled-button" onClick={signOut}>Sign Out</button>
       </div>
       <div className = "chatbot-container">
+        <div className="left-section">
+          <section className="about-section">
+            <h1 className="about-header">About this Demo</h1>
+            <p className="description">
+              We use Amazon Bedrock to generate SQL queries from natural
+              language and return the results conversationally. You can ask questions
+              about campaigns, donations and donors from the sample data in this demo.
+            </p>
+            <h2 className="about-header">Dataset Descriptions</h2>
+            <p className="description">
+              This application utilizes several synthetic datasets to simulate a donor data store:
+            </p>
+            <ul className="about-dataset-list">
+              <li>
+                <strong>Donations:</strong> Transactions including donation amount across various fundraising events. 
+              </li>
+              <li>
+                <strong>Donors:</strong> Details from donor profiles including email, phone and address. 
+              </li>
+              <li>
+                <strong>Events:</strong> Details about fundraising events including name, date, location and type. 
+              </li>
+              <li>
+                <strong>Campaigns:</strong> Details about fundraising campaigns including start date, end data and target amount. 
+              </li>
+              <li>
+                <strong>Dates:</strong> Lookup table for campaign and event dates. 
+              </li>
+              <li>
+                <strong>Payment Method:</strong> Details about donor payment methods. 
+              </li>
+            </ul>
+          </section>
+        </div>
+        <div className="right-section">
       <div className="chatbot-overlay">
         <div className="chatbot-title">Amazon Bedrock Natural Language Query</div>
         <div className="chat-container">
@@ -165,6 +201,7 @@ const Agent: React.FC<AgentProps> = ({ generated_uuid }) => {
             )}
           </form>
         </div>
+      </div>
       </div>
       </div>
     </div>

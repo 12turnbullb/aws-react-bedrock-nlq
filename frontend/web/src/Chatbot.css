@@ -7,6 +7,34 @@
   height: 100vh;
 }
 
+.left-section {
+  width: 25%; /* Left side takes 25% of the width */
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.right-section {
+  width: 75%; /* Right side takes 75% of the width */
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.about-section {
+  max-width: 100%;
+  overflow-y: auto;
+}
+
+.about-header {
+  font-size: 25px;
+  margin-bottom: 10px;
+}
+
 .button-group {
   width: 100%;
   z-index: 2000;
