@@ -75,9 +75,6 @@ def get_relevant_metadata(user_query):
 
 def generate_sql(user_query, id):
     
-    conversation_history = []
-    conversation_history = read_history_from_dynamodb(table, id)
-
     schema_details = get_relevant_metadata(user_query)
     
     details = f"""
@@ -109,7 +106,7 @@ def generate_sql(user_query, id):
             logger.info(f'Attempt {attempt+1}: Generating SQL')
                         
             # Pass user input to bedrock which generates sql 
-            output_message, response = call_bedrock(prompt, conversation_history)
+            output_message, response = call_bedrock(prompt, id)
                         
             # Extract the query out of the model response
             query = response.split('<SQL>')[1].split('</SQL>')[0]
@@ -124,17 +121,6 @@ def generate_sql(user_query, id):
             
             if syntaxcheckmsg=='PASSED':
                 logger.info(f'Syntax check passed on attempt {attempt+1}')
-                
-                # If the query passes, add details to the conversation history
-                # Append the output message to the list of messages.
-                convo_holder = create_convo_message(conversation_history)
-                write_history_to_dynamodb(convo_holder, table, id)
-                
-                conversation_history.append(output_message)
-                
-                convo_holder = create_convo_message(conversation_history)
-                write_history_to_dynamodb(convo_holder, table, id)
-                
                 return query
             else: 
                 # reset the value of prompt with a new prompt and the latest query
@@ -159,7 +145,10 @@ def generate_sql(user_query, id):
 ################### STEP 2 (HELPER FUNCTIONS) #####################
 
 #### HELPER FUNCTION TO CALL BEDROCK
-def call_bedrock(prompt, conversation_history):
+def call_bedrock(prompt, id):
+    
+    # Get the latest conversation history from DynamoDB
+    conversation_history = read_history_from_dynamodb(table, id)
     
     # Define the system prompts to guide the model's behavior and role.
     system_prompts = [{"text": "You are a helpful assistant. Keep your answers short and succinct."}]
@@ -229,7 +218,7 @@ def syntax_checker(query):
             
             if state in ['QUEUED', 'RUNNING']:
                 logger.info("Query is still running...")
-                time.sleep(1)  # Add small delay to prevent too many API calls
+                time.sleep(1)  # Add small delay
                 continue
             break
             
@@ -253,60 +242,49 @@ def syntax_checker(query):
 ################ DYNAMO DB CONVO HISTORY ################
 
 def write_history_to_dynamodb(history, table, id):
-    """
-    This function writes the conversation history to DynamoDB, you can use this function to store the history for
-    future training or analysis.
-    :param history: The conversation history to be written to DynamoDB.
-    :return: None
-    """
+    # Take in message from conversation history
+    # Augment with session id and the timestamp
+    # Write to DynamoDB
+    
     timestamp = str(time.time())
-    for item in history:
-        item_id = id
-        item['id'] = item_id
-        item['timestamp'] = timestamp
-        # write the item to the table
+    
+    # Add an index to differentiate messages written at the same time (avoid overwrites)
+    for idx, item in enumerate(history):
+        item['id'] = id
+        item['timestamp'] = f"{timestamp}_{idx}"
         table.put_item(Item=item)
-        print(f"\n\nItem with ID {item_id} and timestamp {timestamp} written to table {table}\n\n")
+        
+        logger.info(f"\n\nItem with ID {id} and timestamp {timestamp} written to table {table}\n\n")
 
 def read_history_from_dynamodb(table, id):
-    """
-    This function reads the conversation history from DynamoDB, you can use this function to retrieve the history for
-    future training or analysis.
-    :param table: The DynamoDB table to read from.
-    :param id: The ID of the item to read.
-    :return: The conversation history read from DynamoDB.
-    """
-    history_message = {}
+    
     return_items = []
-    projection_expression = '#rl, content'
-    expression_attribute_names = {'#rl': 'role'}
+
+    # Retrieve all the conversation history for the current session ID
     response = table.query(
         KeyConditionExpression=boto3.dynamodb.conditions.Key('id').eq(id),
-        ProjectionExpression=projection_expression,
-        ExpressionAttributeNames=expression_attribute_names
     )
-    items = response.get('Items', [])
-    print(f"\n\nLength of items: {len(items)}\n\n")
+    
+    items = response.get('Items', []) # get the items from the response, or an empty list if none
+    
+    # parse the item response and store in a new message object that Bedrock accepts 
     for item in items:
-      if 'id' or 'timestamp' not in item:
         content = item.get('content', 'N/A')[0]['text']
         role = item.get('role', 'N/A')
-        id = item.get('id', 'N/A') 
-        print(f"\n\nMessage: {content} \nwith Role: {role} \nand ID: {id} \nfound in table {table}\n\n")
+
         history_message = {
-                    "role": role,
-                    "content": [
-                        { "text": content } 
-                    ],
-                }
+            "role": role,
+            "content": [
+                { "text": content } 
+            ],
+        }
+                
+        # Add message to our items list
+        # The final list will contain the full session conversation history
         return_items.append(history_message)
+        
     return return_items
-
-def create_convo_message(history):
-    the_convo_holder = []
-    the_convo_holder.append(history[-1])
-    return the_convo_holder
-
+    
 ######################## STEP 3 #########################
 #### EXECUTE THE GENERATED SQL AGAINST YOUR DATABASE ####
 
@@ -334,9 +312,6 @@ def execute_sql(sql):
 
 def final_output(user_query, id):
      
-    conversation_history = []
-    conversation_history = read_history_from_dynamodb(table, id)
-
     final_query = generate_sql(user_query, id)
 
     logger.info(f"FINAL GENERATED QUERY: {final_query}")
@@ -371,25 +346,18 @@ def final_output(user_query, id):
     Results: {results}
     """
     
-    output_message, output = call_bedrock(prompt, conversation_history)
+    output_message, output = call_bedrock(prompt, id)
     
     logger.info(f"OUTPUT FROM BEDROCK: {output}")
     
-    # Create a new output for our conversation history that combines 
-    # the SQL query with the summarized results for context. 
-    memory_output = {
-    'role': 'assistant', 
-    'content': [{'text': " SQL QUERY: " + final_query + ". RESULTS: "+ output}]
-    }
+    # Write our key conversation history to DynamoDB for future chats to read as context 
+    messages = [
+        {"role": "user", "content": [{"text": user_query}]},
+        {"role": "assistant", "content": [{'text': f"SQL QUERY: {final_query}, RESULTS: {output}"}]}
+    ]
     
-    # Append the output message to the list of messages.
-    convo_holder = create_convo_message(conversation_history)
-    write_history_to_dynamodb(convo_holder, table, id)
-    conversation_history.append(memory_output)
-    
-    convo_holder = create_convo_message(conversation_history)
-    write_history_to_dynamodb(convo_holder, table, id)
-    
+    write_history_to_dynamodb(messages, table, id)
+
     resp_json = {"answer": output, "sql_query": final_query}
     
     return resp_json
@@ -402,7 +370,7 @@ def lambda_handler(event, context):
     if isinstance(body, str):
         body = json.loads(body)
     
-    # pull the user's message and the generated id from the front end event
+    # pull the user's message and the generated id from the frontend event
     prompt = body.get('message')
     generated_uuid = body.get('id')
     
