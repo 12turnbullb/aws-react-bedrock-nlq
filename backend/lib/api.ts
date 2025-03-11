@@ -81,8 +81,8 @@ export class APIStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(300),
       environment: {
         ATHENA_OUTPUT: `s3://${props.athenaQueryBucketName}`, // use the S3 bucket created for Athena query results in our data stack
-        ATHENA_CATALOG: 'AwsDataCatalog', // use the default glue catalog
-        ATHENA_DB: props.glueDatabaseName, // use the glue database created in our Data stack
+        GLUE_CATALOG: 'AwsDataCatalog', // use the default glue catalog
+        GLUE_DB: props.glueDatabaseName, // use the glue database created in our Data stack
         TABLE_NAME: props.tableName, //use the DynamoDB table name created in our Data stack
         ATHENA_WORKGROUP: props.workgroupName, // use the Athena workgroup created in our Data stack
         MODEL_ID: 'us.anthropic.claude-3-sonnet-20240229-v1:0'
