@@ -4,7 +4,7 @@ import boto3
 import logging
 import sys
 import os
-import sample_prompts as Prompts
+import sample_queries as Samples
 
 # Add services directory to our path so we can import our service scripts
 sys.path.append(os.path.join(os.path.dirname(__file__), "services"))
@@ -34,7 +34,7 @@ def generate_sql(user_query, id):
 
     """
     
-    prompt = f"""\n\n{details}. <database_metadata> {schema_details} </database_metadata> <sample_queries> {Prompts.sample_queries} </sample_queries> <question> {user_query} </question>"""
+    prompt = f"""\n\n{details}. <database_metadata> {schema_details} </database_metadata> <sample_queries> {Samples.sample_queries} </sample_queries> <question> {user_query} </question>"""
 
     attempt = 0
     max_attempts = 3

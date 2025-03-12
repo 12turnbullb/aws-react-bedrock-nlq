@@ -2,7 +2,9 @@ import * as cdk from "aws-cdk-lib";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as lambdaNodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as athena from 'aws-cdk-lib/aws-athena';
+import * as glue from 'aws-cdk-lib/aws-glue';
 import * as waf from "aws-cdk-lib/aws-wafv2";
 import * as agw from "aws-cdk-lib/aws-apigateway";
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -51,8 +53,9 @@ import * as path from "path";
  
 interface APIStackProps extends cdk.StackProps {
   userPool: cognito.UserPool;
-  tableName: string;
-  athenaQueryBucketName: string;
+  table: dynamodb.Table;
+  athenaQueryBucket: s3.Bucket;
+  sampleDataBucket: s3.Bucket;
   glueDatabaseName: string;
   workgroupName: string;
 }
@@ -72,6 +75,7 @@ export class APIStack extends cdk.Stack {
       description: 'PyAthena and SQLAlchemy layer to support Natural Language Query (NLQ) in Athena',
     });
     
+  
     // Create the Lambda function
     const lambdaFn = new lambda.Function(this, 'MyLambdaFunction', {
       runtime: lambda.Runtime.PYTHON_3_12,
@@ -80,42 +84,63 @@ export class APIStack extends cdk.Stack {
       layers: [layer],
       timeout: cdk.Duration.seconds(300),
       environment: {
-        ATHENA_OUTPUT: `s3://${props.athenaQueryBucketName}`, // use the S3 bucket created for Athena query results in our data stack
+        ATHENA_OUTPUT: `s3://${props.athenaQueryBucket.bucketName}`, // use the S3 bucket created for Athena query results in our data stack
         GLUE_CATALOG: 'AwsDataCatalog', // use the default glue catalog
         GLUE_DB: props.glueDatabaseName, // use the glue database created in our Data stack
-        TABLE_NAME: props.tableName, //use the DynamoDB table name created in our Data stack
+        TABLE_NAME: props.table.tableName, //use the DynamoDB table name created in our Data stack
         ATHENA_WORKGROUP: props.workgroupName, // use the Athena workgroup created in our Data stack
         MODEL_ID: 'us.anthropic.claude-3-sonnet-20240229-v1:0'
       }
     });
     
-    // Add S3 permissions
+    // Add permissions for the Lambda function to access resources from our Data stack
+    props.table.grantReadWriteData(lambdaFn);
+    props.athenaQueryBucket.grantRead(lambdaFn); 
+    props.athenaQueryBucket.grantWrite(lambdaFn);
+    props.sampleDataBucket.grantRead(lambdaFn); 
+    props.sampleDataBucket.grantWrite(lambdaFn);
+    
+    // Add custom permissions for resources without CDK grant methods
     lambdaFn.addToRolePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
-        's3:GetObject',
-        's3:PutObject',
-        's3:ListBucket',
-        's3:GetBucketLocation',
-        's3:ListBucketMultipartUploads',
-        's3:ListMultipartUploadParts',
-        's3:AbortMultipartUpload',
-        's3:CreateBucket',
-        'athena:StartQueryExecution',
-        'athena:GetQueryExecution',
-        'athena:GetQueryResults',
-        'athena:StopQueryExecution',
+        'bedrock:InvokeModel'
+      ],
+      resources: [
+        `arn:aws:bedrock:*::foundation-model/*`,
+        `arn:aws:bedrock:${this.region}:${this.account}:inference-profile/*`,
+      ]
+    }));
+    
+    lambdaFn.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
         'glue:GetTable',
         'glue:GetPartition',
         'glue:GetPartitions',
         'glue:GetDatabase',
-        'glue:GetTables',
-        'bedrock:*',
-        'dynamodb:*'
+        'glue:GetTables'
       ],
-      resources: ['*']
+      resources: [
+        `arn:aws:glue:${this.region}:${this.account}:catalog`,
+        `arn:aws:glue:${this.region}:${this.account}:database/${props.glueDatabaseName}`,
+        `arn:aws:glue:${this.region}:${this.account}:table/${props.glueDatabaseName}/*`
+      ]
     }));
-
+    
+    lambdaFn.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'athena:StartQueryExecution',
+        'athena:GetQueryExecution',
+        'athena:GetQueryResults',
+        'athena:StopQueryExecution'
+      ],
+      resources: [
+        `arn:aws:athena:${this.region}:${this.account}:workgroup/*`
+      ],
+    }));
+    
     // Create a Web Application Firewall (WAF) to restrict traffic to our API endpoint 
     
     // Retrieve IP ranges from the CDK context (cdk.json)

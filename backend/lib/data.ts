@@ -58,8 +58,8 @@ import * as path from "path";
 
 
 export class DataStack extends cdk.Stack {
-    public readonly tableName: string;
-    public readonly athenaQueryBucketName: string;
+    public readonly table: dynamodb.Table;
+    public readonly athenaQueryBucket: s3.Bucket;
     public readonly glueDatabaseName: string;
     public readonly sampleDataBucket: s3.Bucket;
     public readonly workgroupName: string;
@@ -67,11 +67,9 @@ export class DataStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
         
-        this.tableName = `NLQ-chat-history-${this.stackName}`;
-        
         // Create the DynamoDB table
-        const table = new dynamodb.Table(this, 'MyDynamoDBTable', {
-          tableName: this.tableName, 
+        this.table = new dynamodb.Table(this, 'MyDynamoDBTable', {
+          tableName: `NLQ-chat-history-${this.stackName}`, 
           partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
           sortKey: { name: 'timestamp', type: dynamodb.AttributeType.STRING },
           billingMode: dynamodb.BillingMode.PROVISIONED, 
@@ -81,7 +79,7 @@ export class DataStack extends cdk.Stack {
         });
         
         // Create S3 bucket for sample data
-        const sampleDataBucket = new s3.Bucket(this, 'SampleDataBucket', {
+        this.sampleDataBucket = new s3.Bucket(this, 'SampleDataBucket', {
           removalPolicy: cdk.RemovalPolicy.DESTROY,
           autoDeleteObjects: true,
         });
@@ -89,14 +87,12 @@ export class DataStack extends cdk.Stack {
         // Upload local CSV data to the sample S3 bucket
         const dataUpload = new s3deploy.BucketDeployment(this, 'UploadCSV', {
           sources: [s3deploy.Source.asset(path.join(__dirname, '../sample_data'))], // Folder containing the CSV files
-          destinationBucket: sampleDataBucket,
+          destinationBucket: this.sampleDataBucket,
         });
         
-        this.athenaQueryBucketName = `athena-results-bucket-cdk-stack-${this.account}`
-        
         // Create S3 bucket for Athena query results
-        const athenaQueryBucket = new s3.Bucket(this, 'AthenaQueryBucket', {
-          bucketName: this.athenaQueryBucketName,
+        this.athenaQueryBucket = new s3.Bucket(this, 'AthenaQueryBucket', {
+          bucketName: `athena-results-bucket-cdk-stack-${this.account}`,
           removalPolicy: cdk.RemovalPolicy.DESTROY,
           autoDeleteObjects: true,
         });
@@ -129,8 +125,8 @@ export class DataStack extends cdk.Stack {
             's3:PutObject',
           ],
           resources: [
-            sampleDataBucket.bucketArn,
-            `${sampleDataBucket.bucketArn}/*`,
+            this.sampleDataBucket.bucketArn,
+            `${this.sampleDataBucket.bucketArn}/*`,
           ],
         }));
             
@@ -140,7 +136,7 @@ export class DataStack extends cdk.Stack {
           role:  glueCrawlerRole.roleArn,
           databaseName: this.glueDatabaseName,
           targets: {
-            s3Targets: [{ path: `s3://${sampleDataBucket.bucketName}/` }],
+            s3Targets: [{ path: `s3://${this.sampleDataBucket.bucketName}/` }],
           },
           tablePrefix: 'sample_',
         });
@@ -152,7 +148,7 @@ export class DataStack extends cdk.Stack {
           state: 'ENABLED',
           workGroupConfiguration: {
             resultConfiguration: {
-              outputLocation: `s3://${this.athenaQueryBucketName}/`,
+              outputLocation: `s3://${this.athenaQueryBucket.bucketName}/`,
             },
           },
         });
@@ -224,17 +220,17 @@ export class DataStack extends cdk.Stack {
 
         // Output values
         new cdk.CfnOutput(this, 'TableNameOutput', {
-          value: this.tableName,
+          value: this.table.tableName,
           exportName: `DynamoDBTable-${this.stackName}`,
         });
         
         new cdk.CfnOutput(this, 'SampleDataBucketOutput', {
-          value: sampleDataBucket.bucketName,
+          value: this.sampleDataBucket.bucketName,
           exportName: `SampleDataBucket-${this.stackName}`,
         });
     
         new cdk.CfnOutput(this, 'AthenaQueryBucketOutput', {
-          value: this.athenaQueryBucketName,
+          value: this.athenaQueryBucket.bucketName,
           exportName: `AthenaQueryBucket-${this.stackName}`,
         });
         

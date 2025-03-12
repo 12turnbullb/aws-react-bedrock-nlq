@@ -26,6 +26,7 @@ athena_client = session.client('athena', config=RETRY_CONFIG)
 s3_client = session.client('s3', config=RETRY_CONFIG)
 glue_client = session.client('glue', config=RETRY_CONFIG)
 
+
 # DynamoDB Resource
 dynamodb = boto3.resource('dynamodb')
 dynamodb_table = dynamodb.Table(TABLE_NAME)
