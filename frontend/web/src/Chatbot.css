@@ -52,9 +52,9 @@
 }
 
 .chatbot-overlay {
-  width: 90%;
-  max-width: 800px;
-  height: 70vh;
+  width: 80%;
+  max-width: 1200px;
+  height: 75%;
   margin-top: 20px;
   margin: auto;
   border: 1px solid #ccc;

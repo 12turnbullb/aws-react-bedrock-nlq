@@ -8,6 +8,7 @@ import { Authenticator } from "@aws-amplify/ui-react";
 import { Amplify } from "aws-amplify";
 import "@aws-amplify/ui-react/styles.css";
 import { postMessage } from "./api";
+import { APP_DESCRIPTION, DATASET_ITEMS } from "./constants/demoText.ts";
 
 Amplify.configure({
   Auth:{
@@ -102,7 +103,6 @@ const Agent: React.FC<AgentProps> = ({ generated_uuid }) => {
     <Authenticator>
       {({ signOut, user }) => (
     <div className = "page-container">
-      
       <div className="button-group">
         <button className="styled-button" onClick={() => window.location.reload()}>Refresh</button>
         <h3>Welcome, {user?.username}!</h3>
@@ -112,34 +112,14 @@ const Agent: React.FC<AgentProps> = ({ generated_uuid }) => {
         <div className="left-section">
           <section className="about-section">
             <h1 className="about-header">About this Demo</h1>
-            <p className="description">
-              We use Amazon Bedrock to generate SQL queries from natural
-              language and return the results conversationally. You can ask questions
-              about campaigns, donations and donors from the sample data in this demo.
-            </p>
+            <p className="description">{APP_DESCRIPTION}</p>
             <h2 className="about-header">Dataset Descriptions</h2>
-            <p className="description">
-              This application utilizes several synthetic datasets to simulate a donor data store:
-            </p>
             <ul className="about-dataset-list">
-              <li>
-                <strong>Donations:</strong> Transactions including donation amount across various fundraising events. 
-              </li>
-              <li>
-                <strong>Donors:</strong> Details from donor profiles including email, phone and address. 
-              </li>
-              <li>
-                <strong>Events:</strong> Details about fundraising events including name, date, location and type. 
-              </li>
-              <li>
-                <strong>Campaigns:</strong> Details about fundraising campaigns including start date, end data and target amount. 
-              </li>
-              <li>
-                <strong>Dates:</strong> Lookup table for campaign and event dates. 
-              </li>
-              <li>
-                <strong>Payment Method:</strong> Details about donor payment methods. 
-              </li>
+              {DATASET_ITEMS.map((item, index) => (
+                <li key={index}>
+                  <strong>{item.title}:</strong> {item.description}
+                </li>
+              ))}
             </ul>
           </section>
         </div>
