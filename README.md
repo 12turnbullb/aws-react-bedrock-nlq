@@ -6,7 +6,7 @@ This sample shows how to make a React single-page application (SPA) with the AWS
 
 Screenshots of this demo are shown below.
 
-![screen-cognito](imgs/screen-cognito.png)
+![screen-cognito](imgs/cognito-login.PNG)
 ![screen-home](imgs/app-preview.PNG)
 
 ---
@@ -154,20 +154,20 @@ cd aws-react-bedrock-nlq/frontend/web
 npm install
 ```
 
-- This React app uses environment variables to manage configuration settings. Follow these steps to set up your environment file:
+This React app uses environment variables to manage configuration settings. Follow these steps to set up your environment file:
 
-  - In the [frontend/web](frontend/web) directory, open the file named `.env`.
-  - Update the sample values for each variable using the outputs from your backend CDK stacks.  
- 
-    1. Navigate to the [AWS Cloudformation console](https://console.aws.amazon.com/cloudformation/home)
-    2. Select `AuthStack` from the list of completed stacks. 
-    2. From the `Outputs` tab, copy the CognitoUserPoolId and the CognitoUserPoolWebClientId. 
-    ![Cognito Outputs](imgs/cognito_stack.png)
-    3. Next, select the `APISTack`. 
-    4. From the `Outputs` tab, copy the apiEndpoint. 
-    ![API Outputs](imgs/api_stack.png)
+- In the [frontend/web](frontend/web) directory, open the file named `.env`.
+- Update the sample values for each variable using the outputs from your backend CDK stacks.
 
-  - Add your output values to your environment variables in the `.env` file in the following format
+  1. Navigate to the [AWS Cloudformation console](https://console.aws.amazon.com/cloudformation/home)
+  2. Select `AuthStack` from the list of completed stacks.
+  3. From the `Outputs` tab, copy the CognitoUserPoolId and the CognitoUserPoolWebClientId.
+     ![Cognito Outputs](imgs/cognito_stack.png)
+  4. Next, select the `APISTack`.
+  5. From the `Outputs` tab, copy the apiEndpoint.
+     ![API Outputs](imgs/api_stack.png)
+
+- Add your output values to your environment variables in the `.env` file in the following format
 
   ```sh
   # .env
@@ -178,7 +178,8 @@ npm install
   VITE_API_ENDPOINT =  **API endpoint from your APIStack output**
   ```
 
-- Save your `.env` file 
+- Save your `.env` file
+
 - Run `npm run build` in the same directory to build react scripts.
 
 ```bash
@@ -221,11 +222,11 @@ FrontendStack.endpoint = xxx.cloudfront.net
 
 1. Navigate to the [Amazon Cognito console](https://console.aws.amazon.com/cognito/v2/idp/user-pools)
 2. Select the user pool that was created from your CDK project.
-3. From the left menu under `User management` select `users`. 
-4. Select `Create user` from the top right. 
-5. Create a username that the user will use to login, the set or generate a password. 
-    ![Create user](imgs/create_user.PNG)
-6. Select `Create user`. Use the credentials to enter the application using the Cloudfront URL. 
+3. From the left menu under `User management` select `users`.
+4. Select `Create user` from the top right.
+5. Create a username that the user will use to login, the set or generate a password.
+   ![Create user](imgs/create_user.PNG)
+6. Select `Create user`. Use the credentials to enter the application using the Cloudfront URL.
 
 ## Experimenting with the Chatbot
 
