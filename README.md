@@ -97,7 +97,7 @@ Ensure that the following tools are installed before proceeding:
 - Run `git clone` command to download the source code
 
 ```bash
-git clone https://github.com/aws-samples/aws-react-api-nlq.git
+git clone https://github.com/12turnbullb/aws-react-bedrock-nlq.git
 ```
 
 ---
