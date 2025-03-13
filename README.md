@@ -6,7 +6,6 @@ This sample shows how to make a React single-page application (SPA) with the AWS
 
 Screenshots of this demo are shown below.
 
-![screen-cognito](imgs/cognito-login.PNG)
 ![screen-home](imgs/app-preview.PNG)
 
 ---
@@ -123,7 +122,7 @@ npm install
 ```
 
 - Run `cdk deploy --all` to deploy backend resouces.
-  - You can deploy each stack individually like `cdk deploy AuthStack`.
+  - Alternatively, you can deploy each stack individually like `cdk deploy AuthStack`.
 
 ```bash
 cdk deploy --all
@@ -161,21 +160,25 @@ This React app uses environment variables to manage configuration settings. Foll
 
   1. Navigate to the [AWS Cloudformation console](https://console.aws.amazon.com/cloudformation/home)
   2. Select `AuthStack` from the list of completed stacks.
-  3. From the `Outputs` tab, copy the CognitoUserPoolId and the CognitoUserPoolWebClientId.
+  3. From the `Outputs` tab, copy the `CognitoUserPoolId` and the `CognitoUserPoolWebClientId`.
+
      ![Cognito Outputs](imgs/cognito_stack.png)
+
   4. Next, select the `APISTack`.
-  5. From the `Outputs` tab, copy the apiEndpoint.
+  5. From the `Outputs` tab, copy the `apiEndpoint`.
+ 
      ![API Outputs](imgs/api_stack.png)
 
 - Add your output values to your environment variables in the `.env` file in the following format
 
   ```sh
   # .env
-  VITE_CLIENT_ID= **Insert Cognito client ID from your AuthStack output**
+  VITE_CLIENT_ID= Insert Cognito client ID from your AuthStack output
 
-  VITE_USER_POOL_ID= **Insert Cognito user pool ID from your AuthStack output**
+  VITE_USER_POOL_ID= Insert Cognito user pool ID from your AuthStack output
 
-  VITE_API_ENDPOINT =  **API endpoint from your APIStack output**
+  VITE_API_ENDPOINT=  API endpoint from your APIStack output
+  
   ```
 
 - Save your `.env` file
@@ -224,8 +227,10 @@ FrontendStack.endpoint = xxx.cloudfront.net
 2. Select the user pool that was created from your CDK project.
 3. From the left menu under `User management` select `users`.
 4. Select `Create user` from the top right.
-5. Create a username that the user will use to login, the set or generate a password.
+5. Create a username that the user will use to login, then set or generate a password.
+
    ![Create user](imgs/create_user.PNG)
+   
 6. Select `Create user`. Use the credentials to enter the application using the Cloudfront URL.
 
 ## Experimenting with the Chatbot
