@@ -1,9 +1,7 @@
 import config
 import time
-import sqlalchemy as sa
-from sqlalchemy import create_engine, text
 
-#### HELPER FUNCTIONS TO CHECK THE SYNTAX OF THE GENERATED SQL  ####        
+#### HELPER FUNCTION TO CHECK THE SYNTAX OF THE GENERATED SQL  ####        
 
 def syntax_checker(query):
     
@@ -40,11 +38,27 @@ def syntax_checker(query):
     
         # Check if the query completed successfully
         if state == 'SUCCEEDED':
-            return "PASSED"
+            # Fetch query results
+            results_response = config.athena_client.get_query_results(QueryExecutionId=execution_id)
+            
+            # Extract results
+            result_data = []
+            rows = results_response.get("ResultSet", {}).get("Rows", [])
+            for row in rows:
+                result_data.append([col.get("VarCharValue", "") for col in row.get("Data", [])])
+            
+            return {
+               "state": "PASSED",
+               "output": result_data 
+            }
         else:
             config.logger.error(f"Query failed syntax check")
             message = response_wait['QueryExecution']['Status']['StateChangeReason']
-            return message
+
+            return {
+                "state": "FAILED",
+                "output": message
+            }
             
     except Exception as e:
         errorMessage = f"An error occurred checking the SQL query syntax: {str(e)}"
@@ -54,25 +68,3 @@ def syntax_checker(query):
     return message
     
 
-    
-######################## STEP 3 #########################
-#### EXECUTE THE GENERATED SQL AGAINST YOUR DATABASE ####
-
-def execute_sql(sql):
-    try: 
-        athena_connection_str = f'awsathena+rest://:@athena.{config.REGION}.amazonaws.com:443/{config.GLUE_DB_NAME}?s3_staging_dir={config.ATHENA_RESULTS_S3}&catalog_name={config.GLUE_CATALOG}'
-        # Create Athena engine
-        engine = create_engine(athena_connection_str) 
-    
-        # connect and execute the SQL
-        with engine.connect() as connection:
-            result = connection.execute(text(sql))
-            rows = result.all()
-            config.logger.info('SQL Execution Successful')
-            return str(rows)
-    
-    except Exception as e:
-
-        errorMessage = f"SQL Execution Failed: {str(e)}"
-        config.logger.error(errorMessage)
-        raise Exception(errorMessage)

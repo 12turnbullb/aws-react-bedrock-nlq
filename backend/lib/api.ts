@@ -68,20 +68,11 @@ export class APIStack extends cdk.Stack {
       cognitoUserPools: [props.userPool], // pass in the user pool created in our Auth stack
     });
     
-    // Create the Lambda layer
-    const layer = new lambda.LayerVersion(this, 'MyLambdaLayer', {
-      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/layer')),
-      compatibleRuntimes: [lambda.Runtime.PYTHON_3_12],
-      description: 'PyAthena and SQLAlchemy layer to support Natural Language Query (NLQ) in Athena',
-    });
-    
-  
     // Create the Lambda function
     const lambdaFn = new lambda.Function(this, 'MyLambdaFunction', {
       runtime: lambda.Runtime.PYTHON_3_12,
       handler: 'lambda_function.lambda_handler',  
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/nlq')), 
-      layers: [layer],
       timeout: cdk.Duration.seconds(300),
       environment: {
         ATHENA_OUTPUT: `s3://${props.athenaQueryBucket.bucketName}`, // use the S3 bucket created for Athena query results in our data stack

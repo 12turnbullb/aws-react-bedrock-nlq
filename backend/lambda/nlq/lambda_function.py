@@ -57,17 +57,20 @@ def generate_sql(user_query, id):
             # check the quality of the SQL query
             syntaxcheckmsg=athena.syntax_checker(query)
             
+            state = syntaxcheckmsg.get('state')
+            output = syntaxcheckmsg.get('output')
+            
             config.logger.info(f"Syntax Checker: {syntaxcheckmsg}")
             
-            if syntaxcheckmsg=='PASSED':
+            if state =='PASSED':
                 config.logger.info(f'Syntax check passed on attempt {attempt+1}')
-                return query
+                return query, output
             else: 
                 
                 # If the original query failed, augment the prompt to generate new SQL building off the failure reasons of the previous query
                 
                 prompt += f"""
-                This a syntax error from the originally generated SQL: {syntaxcheckmsg}. 
+                This a syntax error from the originally generated SQL: {output}. 
                 To correct this, please generate an alternative SQL query which will correct the syntax error.
                 The updated query should take care of all the syntax issues encountered.
                 Follow the instructions mentioned above to remediate the error. 
@@ -90,14 +93,9 @@ def final_output(user_query, id):
     ######################################################
      
     # Generate SQL from the user's question
-    final_query = generate_sql(user_query, id)
+    final_query, results = generate_sql(user_query, id)
 
     config.logger.info(f"FINAL GENERATED QUERY: {final_query}")
-    
-    # Execute the generated SQL against our data store
-    results = athena.execute_sql(final_query)
-
-    config.logger.info(f"SQL QUERY RESULTS: {results}")
 
     prompt = f"""
     You are a helpful assistant providing users with information based on database 
