@@ -75,14 +75,10 @@ There are four cdk stacks:
 
 Ensure that the following tools are installed before proceeding:
 
-- **AWS CLI**: version `2.15.41`
-- **AWS CDK**: version `2.170.0`
-- **AWS Profile**: aws credentials configured
-
-```
-npm install
-sudo npm install -g aws-cdk
-```
+- **AWS CLI**: version `2.24.22` | [Installing the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+- **AWS Profile**: AWS credentials permissions for relevant resources (listed above) | [Configure AWS Profile on the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-authentication.html)
+- **AWS CDK Prerequisites**: Node, Typescript | [Configure CDK Prerequisites](https://docs.aws.amazon.com/cdk/v2/guide/prerequisites.html)
+- **AWS CDK**: version `2.170.0` | [Getting Started with the AWS CDK ](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html)
 
 ---
 
@@ -107,12 +103,22 @@ git clone https://github.com/aws-samples/aws-react-api-nlq.git
 
 ---
 
-### 3. Deploy backend resources
+### 3. Bootstrap the AWS CDK
+
+If this is your first time using the AWS CDK in your account, you will need to [bootstrap your environment](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping-env.html) so it is primed to deploy CDK projects.
+
+Select the aws account and region where you are deploying your CDK project. The command will provision foundational resources (S3, IAM, ECR) for your CDK projects.
+
+```bash
+cdk bootstrap aws://{aws-account}/{aws-region}
+```
+
+### 4. Deploy backend resources
 
 - Run `npm install` command in the [backend](backend) directory.
 
 ```bash
-cd aws-react-spa-nlq/backend
+cd aws-react-bedrock-nlq/backend
 npm install
 ```
 
@@ -137,24 +143,31 @@ AuthStack.apiEndpointxxx = xxx
 
 ---
 
-### 4. Deploy frontend resources
+### 5. Deploy frontend resources
 
-#### 4.1 Build React app
+#### 5.1 Build React app
 
 - Run `npm install` command in the [frontend/web](frontend/web) directory.
 
 ```bash
-cd aws-react-spa-nlq/frontend/web
+cd aws-react-bedrock-nlq/frontend/web
 npm install
 ```
 
 - This React app uses environment variables to manage configuration settings. Follow these steps to set up your environment file:
 
-  - In the [frontend/web](frontend/web) directory, create a new file named `.env`.
+  - In the [frontend/web](frontend/web) directory, open the file named `.env`.
+  - Update the sample values for each variable using the outputs from your backend CDK stacks.  
+ 
+    1. Navigate to the [AWS Cloudformation console](https://console.aws.amazon.com/cloudformation/home)
+    2. Select `AuthStack` from the list of completed stacks. 
+    2. From the `Outputs` tab, copy the CognitoUserPoolId and the CognitoUserPoolWebClientId. 
+    ![Cognito Outputs](imgs/cognito_stack.png)
+    3. Next, select the `APISTack`. 
+    4. From the `Outputs` tab, copy the apiEndpoint. 
+    ![API Outputs](imgs/api_stack.png)
 
-  - Open the `.env` file in your text editor.
-
-  - Add your environment variables in the following format:
+  - Add your output values to your environment variables in the `.env` file in the following format
 
   ```sh
   # .env
@@ -165,6 +178,7 @@ npm install
   VITE_API_ENDPOINT =  **API endpoint from your APIStack output**
   ```
 
+- Save your `.env` file 
 - Run `npm run build` in the same directory to build react scripts.
 
 ```bash
@@ -173,12 +187,12 @@ npm run build
 
 ---
 
-#### 4.2 Deploy frontend resources
+#### 5.2 Deploy frontend resources
 
-- Move to [frontend/provisioning](frontend/provisioning) directory and run `npm install` command.
+- Move to the [frontend/provisioning](frontend/provisioning) directory and run `npm install` command.
 
 ```bash
-cd aws-react-spa-nlq/frontend/provisioning
+cd aws-react-bedrock-nlq/frontend/provisioning
 npm install
 ```
 
@@ -202,6 +216,16 @@ FrontendStack.endpoint = xxx.cloudfront.net
 ### Create Cognito user
 
 - In order to sign in the app, you need to create a new cognito user. You can create a user by AWS Management Console or AWS CLI.
+
+### Creating a Cognito user in the AWS Console
+
+1. Navigate to the [Amazon Cognito console](https://console.aws.amazon.com/cognito/v2/idp/user-pools)
+2. Select the user pool that was created from your CDK project.
+3. From the left menu under `User management` select `users`. 
+4. Select `Create user` from the top right. 
+5. Create a username that the user will use to login, the set or generate a password. 
+    ![Create user](imgs/create_user.PNG)
+6. Select `Create user`. Use the credentials to enter the application using the Cloudfront URL. 
 
 ## Experimenting with the Chatbot
 
@@ -240,7 +264,7 @@ Collecting and storing chat history is important for 1) maintaing relevant conte
 
 In this sample project, we use DynamoDB to store chat history for each chat session, which is defined as the period between page refreshes. Each time the page is refreshed, a new session ID is created and the chats are stored according to that session ID.
 
-We have two function in our Lambda script, one to write chat history to dynamoDB and one to read from it. At the end of our NLQ pipeline, we write relevant context to DyanmoDB for the subsequent chat to use. Before each Amazon Bedrock call, we pass in the latest conversation history from DynamoDB as context.  
+We have two function in our Lambda script, one to write chat history to dynamoDB and one to read from it.
 
 ## Security
 

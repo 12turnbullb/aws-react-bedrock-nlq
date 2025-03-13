@@ -217,27 +217,6 @@ export class DataStack extends cdk.Stack {
         
         // Ensure the workgroup is deleted AFTER cleanupResource runs
         workgroup.node.addDependency(cleanupResource);
-
-        // Output values
-        new cdk.CfnOutput(this, 'TableNameOutput', {
-          value: this.table.tableName,
-          exportName: `DynamoDBTable-${this.stackName}`,
-        });
-        
-        new cdk.CfnOutput(this, 'SampleDataBucketOutput', {
-          value: this.sampleDataBucket.bucketName,
-          exportName: `SampleDataBucket-${this.stackName}`,
-        });
-    
-        new cdk.CfnOutput(this, 'AthenaQueryBucketOutput', {
-          value: this.athenaQueryBucket.bucketName,
-          exportName: `AthenaQueryBucket-${this.stackName}`,
-        });
-        
-        new cdk.CfnOutput(this, 'GlueDatabaseOutput', {
-          value: this.glueDatabaseName,
-          exportName: `GlueDatabase-${this.stackName}`,
-        });
     
   }
 }
