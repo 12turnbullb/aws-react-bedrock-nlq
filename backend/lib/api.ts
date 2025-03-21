@@ -9,8 +9,10 @@ import * as waf from "aws-cdk-lib/aws-wafv2";
 import * as agw from "aws-cdk-lib/aws-apigateway";
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from "constructs";
 import * as path from "path";
+import { addAPIStackSuppressions } from "./nag-suppressions";
 
 
 /**
@@ -70,7 +72,7 @@ export class APIStack extends cdk.Stack {
     
     // Create the Lambda function
     const lambdaFn = new lambda.Function(this, 'MyLambdaFunction', {
-      runtime: lambda.Runtime.PYTHON_3_12,
+      runtime: lambda.Runtime.PYTHON_3_13,
       handler: 'lambda_function.lambda_handler',  
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/nlq')), 
       timeout: cdk.Duration.seconds(300),
@@ -193,11 +195,22 @@ export class APIStack extends cdk.Stack {
       ],
     });
 
+    // Create log group for API Gateway
+    const logGroup = new logs.LogGroup(this, 'ApiGatewayAccessLogs', {
+      retention: logs.RetentionDays.ONE_MONTH, // Adjust retention as needed
+    });
+
     // Definition of API Gateway
-    const api = new agw.RestApi(this, "api", {
+    const api = new agw.RestApi(this, "NLQApi", {
       deployOptions: {
         stageName: "api",
+        accessLogDestination: new agw.LogGroupLogDestination(logGroup),
+        accessLogFormat: agw.AccessLogFormat.clf(),
+        loggingLevel: agw.MethodLoggingLevel.INFO,
+        dataTraceEnabled: true,
+        metricsEnabled: true
       },
+      cloudWatchRole: true,
       defaultCorsPreflightOptions: {
         allowOrigins: agw.Cors.ALL_ORIGINS,
         allowMethods: agw.Cors.ALL_METHODS,
@@ -206,7 +219,7 @@ export class APIStack extends cdk.Stack {
         types: [agw.EndpointType.REGIONAL], 
       },
     });
-
+    
     // Associate WAF with API Gateway
     const region = cdk.Stack.of(this).region;
     const restApiId = api.restApiId;
@@ -215,12 +228,48 @@ export class APIStack extends cdk.Stack {
       webAclArn: apiWaf.attrArn,
       resourceArn: `arn:aws:apigateway:${region}::/restapis/${restApiId}/stages/${stageName}`,
     });
+    
+    
+    // Create request validator
+    const validator = new agw.RequestValidator(this, 'DefaultValidator', {
+      restApi: api,
+      validateRequestBody: true,
+      validateRequestParameters: true,
+    });
+    
+    // Create the request model - ensure that the request coming from the chatbot is in the form [message, id]
+    const requestModel = new agw.Model(this, 'RequestModel', {
+      restApi: api,
+      contentType: 'application/json',
+      modelName: 'MessageRequest',
+      schema: {
+        type: agw.JsonSchemaType.OBJECT,
+        required: ['message', 'id'], 
+        properties: {
+          message: { 
+            type: agw.JsonSchemaType.STRING,
+          },
+          id: { 
+            type: agw.JsonSchemaType.STRING,
+          }
+        },
+        additionalProperties: false
+      }
+    });
 
     // POST: /nlq
     const userinfoNLQ = api.root.addResource("nlq");
     userinfoNLQ.addMethod("POST", new agw.LambdaIntegration(lambdaFn), {
       authorizer: authorizer,
       authorizationType: agw.AuthorizationType.COGNITO,
+      requestValidator: validator,
+      requestModels: {
+        'application/json': requestModel
+      }
     });
+    
+    
+    // Suppressions for CDK Nag security warnings
+    addAPIStackSuppressions(this);
   }
 }

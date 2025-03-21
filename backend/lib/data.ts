@@ -6,8 +6,10 @@ import * as glue from 'aws-cdk-lib/aws-glue';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as kms from 'aws-cdk-lib/aws-kms';
 import { Construct } from 'constructs';
 import * as path from "path";
+import { addDataStackSuppressions } from "./nag-suppressions";
 
 /**
  * Data Stack
@@ -72,6 +74,7 @@ export class DataStack extends cdk.Stack {
           tableName: `NLQ-chat-history-${this.stackName}`, 
           partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
           sortKey: { name: 'timestamp', type: dynamodb.AttributeType.STRING },
+          pointInTimeRecovery: true,
           billingMode: dynamodb.BillingMode.PROVISIONED, 
           readCapacity: 5,  
           writeCapacity: 5, 
@@ -80,6 +83,9 @@ export class DataStack extends cdk.Stack {
         
         // Create S3 bucket for sample data
         this.sampleDataBucket = new s3.Bucket(this, 'SampleDataBucket', {
+          enforceSSL: true,
+          encryption: s3.BucketEncryption.S3_MANAGED,
+          blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
           removalPolicy: cdk.RemovalPolicy.DESTROY,
           autoDeleteObjects: true,
         });
@@ -93,6 +99,9 @@ export class DataStack extends cdk.Stack {
         // Create S3 bucket for Athena query results
         this.athenaQueryBucket = new s3.Bucket(this, 'AthenaQueryBucket', {
           bucketName: `athena-results-bucket-cdk-stack-${this.account}`,
+          enforceSSL: true,
+          encryption: s3.BucketEncryption.S3_MANAGED,
+          blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
           removalPolicy: cdk.RemovalPolicy.DESTROY,
           autoDeleteObjects: true,
         });
@@ -129,6 +138,23 @@ export class DataStack extends cdk.Stack {
             `${this.sampleDataBucket.bucketArn}/*`,
           ],
         }));
+        
+        // Create KMS key for CloudWatch logs encryption
+        const kmsKey = new kms.Key(this, 'GlueCloudWatchKey', {
+          enableKeyRotation: true,
+          description: 'KMS key for Glue CloudWatch logs encryption'
+        });
+        
+        // Create Glue Security Configuration with AWS managed keys to encrypt logs
+        const securityConfig = new glue.CfnSecurityConfiguration(this, 'GlueSecurityConfig', {
+          name: `${this.stackName}-security-config`,
+          encryptionConfiguration: {
+            cloudWatchEncryption: {
+              cloudWatchEncryptionMode: 'SSE-KMS',
+              kmsKeyArn: kmsKey.keyArn
+            }
+          },
+        });
             
         // Create Glue crawler to crawl the sample data S3 bucket
         const glueCrawler = new glue.CfnCrawler(this, 'GlueCrawler', {
@@ -139,6 +165,7 @@ export class DataStack extends cdk.Stack {
             s3Targets: [{ path: `s3://${this.sampleDataBucket.bucketName}/` }],
           },
           tablePrefix: 'sample_',
+          crawlerSecurityConfiguration: securityConfig.name,
         });
         
         // Create an Athena workgroup to segregate our queries from existing teams
@@ -169,7 +196,7 @@ export class DataStack extends cdk.Stack {
     
         // Create Lambda function to trigger Glue Crawler
         const glueCrawlerTriggerLambda = new lambda.Function(this, 'GlueCrawlerTriggerLambda', {
-          runtime: lambda.Runtime.PYTHON_3_12,
+          runtime: lambda.Runtime.PYTHON_3_13,
           handler: 'index.lambda_handler',
           code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/glueCrawlerTrigger')),
           role: lambdaRoleCrawler,
@@ -189,7 +216,7 @@ export class DataStack extends cdk.Stack {
         
         // Custom Lambda to clean up Athena workgroup on stack DELETE
         const cleanupLambda = new lambda.Function(this, 'AthenaWorkgroupCleanupLambda', {
-          runtime: lambda.Runtime.PYTHON_3_12,
+          runtime: lambda.Runtime.PYTHON_3_13,
           handler: 'index.lambda_handler',
           code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/cleanupAthena')),
           timeout: cdk.Duration.minutes(5),
@@ -217,6 +244,10 @@ export class DataStack extends cdk.Stack {
         
         // Ensure the workgroup is deleted AFTER cleanupResource runs
         workgroup.node.addDependency(cleanupResource);
-    
+        
+        // Suppressions for CDK Nag security warnings
+        addDataStackSuppressions(this);
+        
+      
   }
 }

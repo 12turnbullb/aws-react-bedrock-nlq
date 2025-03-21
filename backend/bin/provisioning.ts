@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
+import { Aspects } from 'aws-cdk-lib';
 import { APIStack } from "../lib/api";
 import { AuthStack } from "../lib/auth";
 import { DataStack } from "../lib/data";
+import { AwsSolutionsChecks, NagSuppressions } from 'cdk-nag';
 
 const app = new cdk.App();
 //const env = {
@@ -26,3 +28,5 @@ new APIStack(app, "APIStack", {
   glueDatabaseName: data.glueDatabaseName,
   workgroupName: data.workgroupName,
 });
+
+Aspects.of(app).add(new AwsSolutionsChecks());

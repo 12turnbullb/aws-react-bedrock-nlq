@@ -1,6 +1,8 @@
 import * as cdk from "aws-cdk-lib";
 import * as cognito from "aws-cdk-lib/aws-cognito";
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from "constructs";
+import { addAuthStackSuppressions } from "./nag-suppressions";
 
 /**
  * Authentication Stack
@@ -27,13 +29,21 @@ export class AuthStack extends cdk.Stack {
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+    
 
     const userPool = new cognito.UserPool(this, "UserPool", {
+      passwordPolicy: {
+        minLength: 8,
+        requireLowercase: true,
+        requireUppercase: true,
+        requireDigits: true,
+        requireSymbols: true,
+      },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       selfSignUpEnabled: false,
       accountRecovery: cognito.AccountRecovery.NONE, 
-    });
-
+      });
+    
     const client = userPool.addClient("WebClient", {
       userPoolClientName: "webClient",
       idTokenValidity: cdk.Duration.days(1),
@@ -56,5 +66,9 @@ export class AuthStack extends cdk.Stack {
       value: client.userPoolClientId,
       description: "clientId required for frontend settings",
     });
+    
+    // Suppressions for CDK Nag security warnings
+    addAuthStackSuppressions(this, userPool);
+    
   }
 }

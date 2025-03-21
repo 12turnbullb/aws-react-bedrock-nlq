@@ -27,7 +27,7 @@ export const postMessage = async (requestData: MessageRequest) => {
   try {
     const token = await getToken(); // retrieve the bearer token for the user 
     
-    const res = await fetch(`${apiEndpoint}/nlq`, {
+    const res = await fetch(`${apiEndpoint}nlq`, {
       method: 'POST',
       headers: {
         "Authorization": token, // pass the cognito token to authorize our API call

@@ -7,6 +7,7 @@ import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as customResources from "aws-cdk-lib/custom-resources";
 import * as path from "path";
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import { addFrontEndStackSuppressions } from "./nag-suppressions";
 
 
 export class FrontendStack extends cdk.Stack {
@@ -20,6 +21,12 @@ export class FrontendStack extends cdk.Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       enforceSSL: true,
     });
+    
+    const loggingBucket = new s3.Bucket(this, "CloudfrontLoggingBucket", {
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      enforceSSL: true,
+    });
 
     // const websiteIdentity = new cloudfront.OriginAccessIdentity(
     //   this,
@@ -27,9 +34,10 @@ export class FrontendStack extends cdk.Stack {
     // );
     // websiteBucket.grantRead(websiteIdentity);
     
+    // Use WAF config from web-acl-stack
     const webAclRef = new SsmParameterReader(this, "WebAclArnParameterReader", {
       parameterName: "WebAclArnParameter",
-      region: "us-east-1",
+      region: this.region,
     }).stringValue;
 
     const websiteDistribution = new cloudfront.Distribution(
@@ -46,10 +54,17 @@ export class FrontendStack extends cdk.Stack {
           },
         ],
         defaultBehavior: {
-          origin: origins.S3BucketOrigin.withOriginAccessControl(websiteBucket) 
-        }
+          origin: origins.S3BucketOrigin.withOriginAccessControl(websiteBucket), 
+          //origin: new origins.S3Origin(websiteBucket),
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY
+        },
+        enableLogging: true,
+        logBucket:loggingBucket,
+        webAclId: webAclRef,
+        minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021
       }
     );
+    
 
     new s3deploy.BucketDeployment(this, "WebsiteDeploy", {
       sources: [
@@ -65,6 +80,10 @@ export class FrontendStack extends cdk.Stack {
       description: "Frontend Endpoint",
       value: websiteDistribution.distributionDomainName,
     });
+    
+    //Suppressions for CDK Nag security warnings
+    addFrontEndStackSuppressions(this);
+
   }
 }
 
@@ -123,4 +142,6 @@ class SsmParameterReader extends Construct {
   private getParameterValue(): string {
     return this.reader.getResponseField("Parameter.Value");
   }
+
+  
 }
