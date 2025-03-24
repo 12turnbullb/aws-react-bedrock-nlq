@@ -33,7 +33,12 @@ export function addFrontEndStackSuppressions(
     {
         id: 'AwsSolutions-S5',
         reason: 'Cloudfront distribution using L2 construct for OAC for secure access to S3 bucket',
+    },
+    {
+        id: 'AwsSolutions-CFR4',
+        reason: 'Cloudfront distribution using the default viewer certificate for this demo deployment.',
     }
+
 
     
   ]);

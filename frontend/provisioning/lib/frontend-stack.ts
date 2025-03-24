@@ -19,21 +19,20 @@ export class FrontendStack extends cdk.Stack {
       websiteIndexDocument: "index.html",
       encryption: s3.BucketEncryption.S3_MANAGED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      autoDeleteObjects: true,
       enforceSSL: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
     
     const loggingBucket = new s3.Bucket(this, "CloudfrontLoggingBucket", {
+      objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
       encryption: s3.BucketEncryption.S3_MANAGED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       enforceSSL: true,
+      autoDeleteObjects: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // const websiteIdentity = new cloudfront.OriginAccessIdentity(
-    //   this,
-    //   "WebsiteIdentity"
-    // );
-    // websiteBucket.grantRead(websiteIdentity);
-    
     // Use WAF config from web-acl-stack
     const webAclRef = new SsmParameterReader(this, "WebAclArnParameterReader", {
       parameterName: "WebAclArnParameter",
@@ -55,13 +54,12 @@ export class FrontendStack extends cdk.Stack {
         ],
         defaultBehavior: {
           origin: origins.S3BucketOrigin.withOriginAccessControl(websiteBucket), 
-          //origin: new origins.S3Origin(websiteBucket),
-          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
         },
         enableLogging: true,
         logBucket:loggingBucket,
         webAclId: webAclRef,
-        minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021
+        minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
       }
     );
     

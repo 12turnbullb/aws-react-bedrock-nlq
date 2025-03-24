@@ -74,7 +74,9 @@ export class DataStack extends cdk.Stack {
           tableName: `NLQ-chat-history-${this.stackName}`, 
           partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
           sortKey: { name: 'timestamp', type: dynamodb.AttributeType.STRING },
-          pointInTimeRecovery: true,
+          pointInTimeRecoverySpecification: {
+            pointInTimeRecoveryEnabled: true,
+          },
           billingMode: dynamodb.BillingMode.PROVISIONED, 
           readCapacity: 5,  
           writeCapacity: 5, 

@@ -276,7 +276,10 @@ We have two function in our Lambda script, one to write chat history to dynamoDB
 
 ### Restrict Access by IP
 
-cdk.json lists the specific IPs to restrict API access to your API Gateway through the AWS Web Application Firewall (WAF). By default the WAF allows all IPv4 traffic. Updates these IPs if neccesary.
+cdk.json lists the specific IPs to restrict API access to your AWS resources through the AWS Web Application Firewall (WAF). By default the WAF allows all IPv4 traffic. Updates these IPs if neccesary.
+
+backend/cdk.json (API Gateway)
+frontend/cdk.json (Cloudfront)
 
 ## Testing
 
