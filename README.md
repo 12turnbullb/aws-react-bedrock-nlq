@@ -1,4 +1,4 @@
-# Natural Language Query with Amazon Bedrock (React SPA App)
+# Natural Language Query with Amazon Bedrock (React Single-Page Application)
 
 ## Overview
 
@@ -87,7 +87,7 @@ Ensure that the following tools are installed before proceeding:
 
 - Navigate to the Amazon Bedrock console and select `Model Access` at the bottom of the left navigation pane.
 - Select `Enable specific model access` or `Modify model access` if you've visited this setting before.
-- Check the `Claude 3 Sonnet` model under the Anthropic header. We'll use this model to generate SQL queries and return results in natural language. You are welcome to swap in an Amazon Bedrock model of your choice in the environment variables of the API's Lambda function.
+- Check the `Claude 3 Sonnet` model under the Anthropic header. We'll use this model to generate SQL queries and return results in natural language. You are welcome to swap in an Amazon Bedrock model of your choice by updating the cdk.json file in the backend directory.
 - Select `Next` and choose `Submit`.
 
 ---
@@ -247,6 +247,15 @@ Try some of the following sample questions to test the chatbot in it's SQL gener
 
 1. Which campaign had the highest total donation amount?
 2. What payment method was used most frequently?
+3. 
+
+### Updating the Model ID
+
+The Bedrock calls use the [Bedrock Converse API](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html) which makes it easier to sub in new model IDs without having to account for the variety of response structures. 
+
+To update the model ID, navigate to the cdk.json file in the /backend directory and update the `modelId` field with a model ID from the list of [available Bedrock model IDs](https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html). 
+
+Re-deploy the CDK backend in Step 4 above. 
 
 ---
 

@@ -82,7 +82,7 @@ export class APIStack extends cdk.Stack {
         GLUE_DB: props.glueDatabaseName, // use the glue database created in our Data stack
         TABLE_NAME: props.table.tableName, //use the DynamoDB table name created in our Data stack
         ATHENA_WORKGROUP: props.workgroupName, // use the Athena workgroup created in our Data stack
-        MODEL_ID: 'us.anthropic.claude-3-sonnet-20240229-v1:0'
+        MODEL_ID: scope.node.tryGetContext("modelId")
       }
     });
     
