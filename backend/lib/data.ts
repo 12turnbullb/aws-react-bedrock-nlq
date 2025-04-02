@@ -7,6 +7,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as kms from 'aws-cdk-lib/aws-kms';
+import * as logs from 'aws-cdk-lib/aws-logs'
 import { Construct } from 'constructs';
 import * as path from "path";
 import { addDataStackSuppressions } from "./nag-suppressions";
@@ -140,23 +141,7 @@ export class DataStack extends cdk.Stack {
             `${this.sampleDataBucket.bucketArn}/*`,
           ],
         }));
-        
-        // Create KMS key for CloudWatch logs encryption
-        const kmsKey = new kms.Key(this, 'GlueCloudWatchKey', {
-          enableKeyRotation: true,
-          description: 'KMS key for Glue CloudWatch logs encryption'
-        });
-        
-        // Create Glue Security Configuration with AWS managed keys to encrypt logs
-        const securityConfig = new glue.CfnSecurityConfiguration(this, 'GlueSecurityConfig', {
-          name: `${this.stackName}-security-config`,
-          encryptionConfiguration: {
-            cloudWatchEncryption: {
-              cloudWatchEncryptionMode: 'SSE-KMS',
-              kmsKeyArn: kmsKey.keyArn
-            }
-          },
-        });
+      
             
         // Create Glue crawler to crawl the sample data S3 bucket
         const glueCrawler = new glue.CfnCrawler(this, 'GlueCrawler', {
@@ -167,7 +152,7 @@ export class DataStack extends cdk.Stack {
             s3Targets: [{ path: `s3://${this.sampleDataBucket.bucketName}/` }],
           },
           tablePrefix: 'sample_',
-          crawlerSecurityConfiguration: securityConfig.name,
+          //crawlerSecurityConfiguration: securityConfig.name
         });
         
         // Create an Athena workgroup to segregate our queries from existing teams

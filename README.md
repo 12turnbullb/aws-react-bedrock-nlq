@@ -173,9 +173,9 @@ This React app uses environment variables to manage configuration settings. Foll
 
   ```sh
   # .env
-  VITE_CLIENT_ID= Insert Cognito client ID from your AuthStack output
-
   VITE_USER_POOL_ID= Insert Cognito user pool ID from your AuthStack output
+  
+  VITE_CLIENT_ID= Insert Cognito client ID from your AuthStack output
 
   VITE_API_ENDPOINT=  API endpoint from your APIStack output
   

@@ -49,7 +49,12 @@ export function addDataStackSuppressions(
     {
         id: 'AwsSolutions-L1',
         reason: 'Runtime used for BucketDeployment construct is not managed in a user deployed lambda.',
-    }
+    },
+    {
+        id: 'AwsSolutions-GL1',
+        reason: 'Encryption for Glue Crawler cloudwatch logs is not neccesary for the crawler run as a deployment pre-requisite.',
+    },
+    
   ]);
 
 }
