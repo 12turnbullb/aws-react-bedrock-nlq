@@ -77,7 +77,7 @@ Ensure that the following tools are installed before proceeding:
 - **AWS CLI**: version `2.24.22` | [Installing the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 - **AWS Profile**: AWS credentials permissions for relevant resources (listed above) | [Configure AWS Profile on the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-authentication.html)
 - **AWS CDK Prerequisites**: Node, Typescript | [Configure CDK Prerequisites](https://docs.aws.amazon.com/cdk/v2/guide/prerequisites.html)
-- **AWS CDK**: version `2.170.0` | [Getting Started with the AWS CDK ](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html)
+- **AWS CDK**: version `2.1006.0` | [Getting Started with the AWS CDK ](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html)
 
 ---
 
