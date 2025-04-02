@@ -155,7 +155,7 @@ npm install
 
 This React app uses environment variables to manage configuration settings. Follow these steps to set up your environment file:
 
-- In the [frontend/web](frontend/web) directory, open the file named `.env`.
+- In the [frontend/web](frontend/web) directory, open the file named `.env.example`.
 - Update the sample values for each variable using the outputs from your backend CDK stacks.
 
   1. Navigate to the [AWS Cloudformation console](https://console.aws.amazon.com/cloudformation/home)
@@ -169,7 +169,7 @@ This React app uses environment variables to manage configuration settings. Foll
  
      ![API Outputs](imgs/api_stack.png)
 
-- Add your output values to your environment variables in the `.env` file in the following format
+- Add your output values to your environment variables in the `.env.example` file in the following format
 
   ```sh
   # .env
@@ -181,7 +181,7 @@ This React app uses environment variables to manage configuration settings. Foll
   
   ```
 
-- Save your `.env` file
+- Save your `.env.example` file and rename to `.env` so your application can access the configurations. 
 
 - Run `npm run build` in the same directory to build react scripts.
 
