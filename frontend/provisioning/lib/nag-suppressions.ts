@@ -20,7 +20,7 @@ export function addFrontEndStackSuppressions(
     },
     {
         id: 'AwsSolutions-S1',
-        reason: 'Bucket logging not required for the sample data and athena query buckets.',
+        reason: 'Bucket logging not required for the website and cloudfront logging buckets.',
     },
     {
         id: 'AwsSolutions-CFR1',
@@ -32,11 +32,11 @@ export function addFrontEndStackSuppressions(
     },
     {
         id: 'AwsSolutions-S5',
-        reason: 'Cloudfront distribution using L2 construct for OAC for secure access to S3 bucket',
+        reason: 'Cloudfront distribution using L2 construct for OAC for secure access to S3 bucket.',
     },
     {
         id: 'AwsSolutions-CFR4',
-        reason: 'Cloudfront distribution using the default viewer certificate for this demo deployment.',
+        reason: 'Cloudfront distribution using the default viewer certificate for this demo deployment. Restricting TLS version using minimumProtocolVersion.',
     }
 
 

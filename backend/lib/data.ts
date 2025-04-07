@@ -177,9 +177,21 @@ export class DataStack extends cdk.Stack {
           assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
           managedPolicies: [
             iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
-            iam.ManagedPolicy.fromAwsManagedPolicyName('AWSGlueConsoleFullAccess'),
           ],
         });
+        
+        
+        // Attach inline policy for Lambda function to run the Glue Crawler
+        lambdaRoleCrawler.addToPolicy(new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'glue:StartCrawler',
+          ],
+          resources: [
+            `arn:aws:glue:${this.region}:${this.account}:crawler/*`,
+          ],
+        }));
+        
     
         // Create Lambda function to trigger Glue Crawler
         const glueCrawlerTriggerLambda = new lambda.Function(this, 'GlueCrawlerTriggerLambda', {

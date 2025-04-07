@@ -47,13 +47,13 @@ export const postMessage = async (requestData: MessageRequest) => {
     
     return responseData;
     
-  } catch (error: any) {
-    
+  } catch (error) {
+      const err = error as Error;
       // Throw an error instead of returning a failed response
       throw new Error(
-        error.message.includes("Failed to fetch") || error.message.includes("NetworkError")
+        err.message.includes("Failed to fetch") || err.message.includes("NetworkError")
           ? "Network error: Unable to reach server. Please check your connection."
-          : error.message
+          : err.message
       );
   }
 };
