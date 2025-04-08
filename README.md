@@ -2,7 +2,9 @@
 
 ## Overview
 
-This sample shows how to make a React single-page application (SPA) with the AWS Cloud Development Kit (CDK) that hosts a chatbot for natural language query of structured data.
+This sample shares how to deploy a React single-page application (SPA) with the AWS Cloud Development Kit (CDK) that hosts a chatbot for natural language query of structured data.
+
+**NOTE:** This sample is designed for experimentation and is NOT recommended for use in production.
 
 Screenshots of this demo are shown below.
 
@@ -85,9 +87,9 @@ Ensure that the following tools are installed before proceeding:
 
 ### 1. Enable Amazon Bedrock model access
 
-- Navigate to the Amazon Bedrock console and select `Model Access` at the bottom of the left navigation pane.
+- Navigate to the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock/home) and select `Model Access` at the bottom of the left navigation pane.
 - Select `Enable specific model access` or `Modify model access` if you've visited this setting before.
-- Check the `Claude 3 Sonnet` model under the Anthropic header. We'll use this model to generate SQL queries and return results in natural language. You are welcome to swap in an Amazon Bedrock model of your choice by updating the cdk.json file in the backend directory.
+- Check the `Claude 3 Sonnet` model under the Anthropic header. We'll use this model to generate SQL queries and return results in natural language. You are welcome to swap in an Amazon Bedrock model of your choice by updating the modelId field of the cdk.json file in the /backend directory.
 - Select `Next` and choose `Submit`.
 
 ---
@@ -166,7 +168,7 @@ This React app uses environment variables to manage configuration settings. Foll
 
   4. Next, select the `APISTack`.
   5. From the `Outputs` tab, copy the `apiEndpoint`.
- 
+
      ![API Outputs](imgs/api_stack.png)
 
 - Add your output values to your environment variables in the `.env.example` file in the following format
@@ -174,14 +176,14 @@ This React app uses environment variables to manage configuration settings. Foll
   ```sh
   # .env
   VITE_USER_POOL_ID= Insert Cognito user pool ID from your AuthStack output
-  
+
   VITE_CLIENT_ID= Insert Cognito client ID from your AuthStack output
 
   VITE_API_ENDPOINT=  API endpoint from your APIStack output
-  
+
   ```
 
-- Save your `.env.example` file and rename to `.env` so your application can access the configurations. 
+- Save your `.env.example` file and rename to `.env` so your application can access the configurations.
 
 - Run `npm run build` in the same directory to build react scripts.
 
@@ -230,7 +232,7 @@ FrontendStack.endpoint = xxx.cloudfront.net
 5. Create a username that the user will use to login, then set or generate a password.
 
    ![Create user](imgs/create_user.PNG)
-   
+
 6. Select `Create user`. Use the credentials to enter the application using the Cloudfront URL.
 
 ## Experimenting with the Chatbot
@@ -247,25 +249,26 @@ Try some of the following sample questions to test the chatbot in it's SQL gener
 
 1. Which campaign had the highest total donation amount?
 2. What payment method was used most frequently?
-3. 
+3. List the top 3 events that generated the most donations.
+4. List the top 3 donors for the campaigns that generated the most donations overall.
 
 ### Updating the Model ID
 
-The Bedrock calls use the [Bedrock Converse API](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html) which makes it easier to sub in new model IDs without having to account for the variety of response structures. 
+The Bedrock calls use the [Bedrock Converse API](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html) which makes it easier to sub in new model IDs without having to account for the variety of response structures.
 
-To update the model ID, navigate to the cdk.json file in the /backend directory and update the `modelId` field with a model ID from the list of [available Bedrock model IDs](https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html). 
+To update the model ID, navigate to the cdk.json file in the /backend directory and update the `modelId` field with a model ID from the list of [available Bedrock model IDs](https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html).
 
-Re-deploy the CDK backend in Step 4 above. 
+Re-deploy the CDK backend following Step 4 in the above instructions.
 
 ---
 
-## Improving NLQ Performance
+## Improving Natural Language Query (NLQ) Performance
 
 ### Metadata retrieval
 
 When running an NLQ pipeline, the most important contribution is metadata about your structured data so that the LLM has enough context to accurately structure SQL. There are multiple methods for retrieving data store metadata such as referencing flat file documentation, dynamically retrieving schema details, or leveraging RAG for vectorized metadata.
 
-This project simply retrieves column name and data types from our crawled data in the AWS Glue Data Catalog via the AWS SDK. This works because the data is simple enough for the LLM to interpret by column name. However, if you want to add more data source context, consider structuring a text file with metadata that the LLM can reference instead. AS your dataset matures and evolves, consider a RAG pipeline for metadata retrieval.
+This project simply retrieves column name and data types from our crawled data in the AWS Glue Data Catalog via the AWS SDK. This works because the data is simple enough for the LLM to interpret by column name. However, if you want to add more data source context, consider structuring a text file with metadata that the LLM can reference instead. As your dataset matures and evolves, consider a RAG pipeline for metadata retrieval.
 
 ### Sample queries
 
@@ -279,16 +282,14 @@ Collecting and storing chat history is important for 1) maintaing relevant conte
 
 In this sample project, we use DynamoDB to store chat history for each chat session, which is defined as the period between page refreshes. Each time the page is refreshed, a new session ID is created and the chats are stored according to that session ID.
 
-We have two function in our Lambda script, one to write chat history to dynamoDB and one to read from it.
-
 ## Security
 
 ### Restrict Access by IP
 
-cdk.json lists the specific IPs to restrict API access to your AWS resources through the AWS Web Application Firewall (WAF). By default the WAF allows all IPv4 traffic. Updates these IPs if neccesary.
+The cdk.json file lists specific IPs to restrict access to your AWS resources through the AWS Web Application Firewall (WAF). By default the WAF allows all IPv4 traffic. Updates these IPs if neccesary.
 
-backend/cdk.json (API Gateway)
-frontend/cdk.json (Cloudfront)
+- backend/cdk.json (API Gateway WAF IP Restriction)
+- frontend/cdk.json (Cloudfront WAF IP Restriction)
 
 ## Testing
 

@@ -180,7 +180,6 @@ export class DataStack extends cdk.Stack {
           ],
         });
         
-        
         // Attach inline policy for Lambda function to run the Glue Crawler
         lambdaRoleCrawler.addToPolicy(new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
