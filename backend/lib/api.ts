@@ -134,6 +134,27 @@ export class APIStack extends cdk.Stack {
       ],
     }));
     
+    
+    // Create a Lambda function with Bedrock Knowledge Bases as NLQ pipeline
+    const lambdaFnKB = new lambda.Function(this, 'MyLambdaFunctionKB', {
+      runtime: lambda.Runtime.PYTHON_3_13,
+      handler: 'lambda_function.lambda_handler',  
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/nlq-kb')), 
+      timeout: cdk.Duration.seconds(300),
+      environment: {
+        KNOWLEDGE_BASE_ID: "",
+        MODEL_ID: scope.node.tryGetContext("modelId")
+      }
+    });
+    
+    lambdaFnKB.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'bedrock:*'
+      ],
+      resources: ["*"]
+      }));
+    
     // Create a Web Application Firewall (WAF) to restrict traffic to our API endpoint 
     
     // Retrieve IP ranges from the CDK context (cdk.json)
@@ -244,12 +265,15 @@ export class APIStack extends cdk.Stack {
       modelName: 'MessageRequest',
       schema: {
         type: agw.JsonSchemaType.OBJECT,
-        required: ['message', 'id'], 
+        required: ['message', 'id', 'kb_session_id'], 
         properties: {
           message: { 
             type: agw.JsonSchemaType.STRING,
           },
           id: { 
+            type: agw.JsonSchemaType.STRING,
+          },
+          kb_session_id: { 
             type: agw.JsonSchemaType.STRING,
           }
         },
