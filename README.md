@@ -99,9 +99,8 @@ Ensure that the following tools are installed before proceeding:
 - Run `git clone` command to download the source code
 
 ```bash
-git clone https://github.com/12turnbullb/aws-react-bedrock-nlq.git
-```
-
+git clone https://github.com/aws-samples/nonprofit-samples.git
+cd nonprofit-samples/Bedrock_NLQ_React_App```
 ---
 
 ### 3. Bootstrap the AWS CDK

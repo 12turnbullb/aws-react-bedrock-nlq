@@ -142,18 +142,26 @@ export class APIStack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/nlq-kb')), 
       timeout: cdk.Duration.seconds(300),
       environment: {
-        KNOWLEDGE_BASE_ID: "",
-        MODEL_ID: scope.node.tryGetContext("modelId")
+        KNOWLEDGE_BASE_ID: scope.node.tryGetContext("BedrockKnowledgeBaseId"),
+        MODEL_ID: scope.node.tryGetContext("modelId"),
+        TABLE_NAME: props.table.tableName, 
       }
     });
+    
+    props.table.grantReadWriteData(lambdaFnKB);
     
     lambdaFnKB.addToRolePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
-        'bedrock:*'
+        "bedrock:InvokeModel",
+        "bedrock:QueryKnowledgeBase",
+        "bedrock:GenerateQuery",
+        "bedrock:Retrieve",
+        "bedrock:RetrieveAndGenerate",
+        "bedrock:GetInferenceProfile",
       ],
       resources: ["*"]
-      }));
+    }));
     
     // Create a Web Application Firewall (WAF) to restrict traffic to our API endpoint 
     
@@ -280,10 +288,26 @@ export class APIStack extends cdk.Stack {
         additionalProperties: false
       }
     });
+    
+    // Get the NLQ pipeline mode from the cdk.json context
+    const nlqPipelineMode = scope.node.tryGetContext("nlqPipelineMode");
+    
+    // Validate the pipeline mode
+    if (nlqPipelineMode !== "S3" && nlqPipelineMode !== "KB") {
+      throw new Error(
+        `Invalid nlqPipelineMode in cdk.json: "${nlqPipelineMode}". ` +
+        `Valid options are "S3" or "KB". Please update your cdk.json file.`
+      );
+    }
+    
+    // Determine which Lambda function to use based on the mode
+    const nlqLambdaFunction = nlqPipelineMode === "KB" 
+      ? lambdaFnKB // Bedrock Knowledge Base implementation
+      : lambdaFn; // Default to S3 implementation with Athena
 
     // POST: /nlq
     const userinfoNLQ = api.root.addResource("nlq");
-    userinfoNLQ.addMethod("POST", new agw.LambdaIntegration(lambdaFn), {
+    userinfoNLQ.addMethod("POST", new agw.LambdaIntegration(nlqLambdaFunction), {
       authorizer: authorizer,
       authorizationType: agw.AuthorizationType.COGNITO,
       requestValidator: validator,

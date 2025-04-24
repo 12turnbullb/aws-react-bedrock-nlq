@@ -8,75 +8,20 @@ import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as path from "path";
 import { Construct } from "constructs";
 import { addRedshiftStackSuppressions } from "./nag-suppressions";
-
-
-interface RedshiftStackProps extends cdk.StackProps {
-  sampleDataBucket: s3.Bucket;
-}
-
+import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 
 export class RedshiftStack extends cdk.Stack {
   public readonly redshiftNamespaceName: string;
   public readonly redshiftWorkgroupName: string;
 
-  public constructor(scope: Construct, id: string, props: RedshiftStackProps) {
+  public constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
-
-    // Resources
-    const kbRedshiftServiceRole = new iam.Role(this, 'KBRedshiftServiceRole', {
-      roleName: 'KBRedshiftServiceRole_GenAI_Workshop',
-      assumedBy: new iam.ServicePrincipal('bedrock.amazonaws.com'),
-    });
-
-
-    // Add inline policy for Redshift Data API permissions
-    kbRedshiftServiceRole.addToPolicy(new iam.PolicyStatement({
-      sid: 'RedshiftDataAPIStatementPermissions',
-      effect: iam.Effect.ALLOW,
-      actions: [
-        'redshift-data:GetStatementResult',
-        'redshift-data:DescribeStatement',
-        'redshift-data:CancelStatement',
-        'redshift-data:ExecuteStatement',
-      ],
-      resources: [
-        `arn:aws:redshift-serverless:${this.region}:${this.account}:workgroup*`,
-        `arn:aws:redshift-serverless:${this.region}:${this.account}:namespace*`,
-        `arn:aws:redshift-data:${this.region}:${this.account}:statement/*`,
-      ],
-    }));
-
-    kbRedshiftServiceRole.addToPolicy(new iam.PolicyStatement({
-      sid: 'GetCredentialsWithFederatedIAMCredentials',
-      effect: iam.Effect.ALLOW,
-      actions: ['redshift-serverless:GetCredentials'],
-      resources: [
-        `arn:aws:redshift-serverless:${this.region}:${this.account}:workgroup*`,
-        `arn:aws:redshift-serverless:${this.region}:${this.account}:namespace*`,
-      ],
-    }));
-
-    kbRedshiftServiceRole.addToPolicy(new iam.PolicyStatement({
-      sid: 'SqlWorkbenchAccess',
-      effect: iam.Effect.ALLOW,
-      actions: [
-        'sqlworkbench:GetSqlRecommendations',
-        'sqlworkbench:PutSqlGenerationContext',
-        'sqlworkbench:GetSqlGenerationContext',
-        'sqlworkbench:DeleteSqlGenerationContext',
-      ],
-      resources: [
-        `arn:aws:redshift-serverless:${this.region}:${this.account}:workgroup*`,
-        `arn:aws:redshift-serverless:${this.region}:${this.account}:namespace*`,
-      ],
-    }));
-
-    kbRedshiftServiceRole.addToPolicy(new iam.PolicyStatement({
-      sid: 'KbAccess',
-      effect: iam.Effect.ALLOW,
-      actions: ['bedrock:GenerateQuery'],
-      resources: [`arn:aws:bedrock:${this.region}:${this.account}:*`],
-    }));
+    
+    // Pull in the sample data bucket name from the parameter store
+    const sampleDataBucket = StringParameter.valueForStringParameter(
+      this, 
+      '/nlqCDK/sampleData/bucketName'
+    );
 
     const redshiftIamRole = new iam.Role(this, 'RedshiftIAMRole', {
       assumedBy: new iam.ServicePrincipal('redshift.amazonaws.com'),
@@ -89,8 +34,8 @@ export class RedshiftStack extends cdk.Stack {
         's3:ListBucket',
       ],
       resources: [
-        `arn:aws:s3:::${props.sampleDataBucket.bucketName}/*`,
-        `arn:aws:s3:::${props.sampleDataBucket.bucketName}`,
+        `arn:aws:s3:::${sampleDataBucket}/*`,
+        `arn:aws:s3:::${sampleDataBucket}`,
       ],
     }));
 
@@ -111,8 +56,8 @@ export class RedshiftStack extends cdk.Stack {
         's3:ListBucket',
       ],
       resources: [
-        `arn:aws:s3:::${props.sampleDataBucket.bucketName}/*`,
-        `arn:aws:s3:::${props.sampleDataBucket.bucketName}`,
+        `arn:aws:s3:::${sampleDataBucket}/*`,
+        `arn:aws:s3:::${sampleDataBucket}`,
       ],
     }));
 
@@ -209,7 +154,7 @@ export class RedshiftStack extends cdk.Stack {
         'WORKGROUP_NAME': redshiftWorkgroup.ref,
         'DATABASE_NAME': 'mydatabase',
         'IAM_ROLE': redshiftIamRole.roleArn,
-        'BUCKET_NAME': props.sampleDataBucket.bucketName,
+        'BUCKET_NAME': sampleDataBucket,
       },
     });
     

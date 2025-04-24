@@ -1,6 +1,10 @@
+import config
 import boto3
 import os
 import json
+import time
+from botocore.config import Config
+
 
 def lambda_handler(event, context):
 
@@ -19,8 +23,6 @@ def lambda_handler(event, context):
             'body': json.dumps({})
         }
     
-
-    
     try:
         # Extract the body from the event if it exists (API Gateway integration)
         if 'body' in event and event['body']:
@@ -31,11 +33,17 @@ def lambda_handler(event, context):
             
             user_prompt = body.get('message')
             session_id = body.get('kb_session_id')
+            
+            config.logger.info(f'User prompt: {user_prompt}')
+            config.logger.info(f'Session: {session_id}')
+
         else:
             # Direct Lambda invocation
             user_prompt = event.get('message')
             session_id = body.get('kb_session_id')
-
+            
+            config.logger.info(f'User prompt: {user_prompt}')
+            config.logger.info(f'Session: {session_id}')
         
         if not user_prompt:
             return {
@@ -46,6 +54,13 @@ def lambda_handler(event, context):
         
         # Invoke the model and get the response
         response_output, sql_query, response_session_id = invoke_model(user_prompt, session_id)
+        
+        config.logger.info(f'Output: {response_output}')
+        config.logger.info(f'SQL: {sql_query}')
+        config.logger.info(f'Session: {response_session_id}')
+        
+        # Write the exchange to DynamoDB for historical analysis
+        write_history_to_dynamodb(user_prompt, response_output, sql_query, response_session_id)
         
         # Return the response with CORS headers
         return {
@@ -67,23 +82,6 @@ def lambda_handler(event, context):
         }
 
 def invoke_model(user_prompt, session_id):
-    """
-    Invokes the Bedrock model with knowledge base integration.
-    
-    Parameters:
-    - user_prompt: The user's input text
-    - session_id: Optional session ID for continuing a conversation
-    
-    Returns:
-    - Tuple containing (response_output, response_session_id)
-    """
-    # Initialize Bedrock clients
-    bedrock = boto3.client(service_name='bedrock-runtime', region_name="us-east-1")
-    agent_client = boto3.client(service_name='bedrock-agent-runtime', region_name="us-east-1")
-    
-    # Get the knowledge base ID from environment variables
-    knowledge_base_id = os.environ.get('KNOWLEDGE_BASE_ID')
-    modelArn = os.environ.get('MODEL_ID')
 
     retrieve_and_generate_args = {
         'input': {
@@ -92,8 +90,8 @@ def invoke_model(user_prompt, session_id):
         'retrieveAndGenerateConfiguration': {
             'type': 'KNOWLEDGE_BASE',
             'knowledgeBaseConfiguration': {
-                'knowledgeBaseId': knowledge_base_id,
-                'modelArn': modelArn,
+                'knowledgeBaseId': config.KNOWLEDGE_BASE_ID,
+                'modelArn': config.MODEL_ID,
             }
         }
     }
@@ -102,15 +100,39 @@ def invoke_model(user_prompt, session_id):
     if session_id:
         retrieve_and_generate_args['sessionId'] = session_id
 
-    # Pass our arguments to the bedrock knowledge bases retrieve and generate request
-    response = agent_client.retrieve_and_generate(**retrieve_and_generate_args)
+    try:
+        # Pass our arguments to the bedrock knowledge bases retrieve and generate request
+        response = config.agent_client.retrieve_and_generate(**retrieve_and_generate_args)
+    
+        response_output = response['output']['text']
+        sql_sample = response["citations"][0]["retrievedReferences"][0]["location"]["sqlLocation"]["query"]
+        response_session_id = response.get('sessionId')
+    
+        return response_output, sql_sample, response_session_id
+        
+    except Exception as e:
+        config.logger.error(f"Knowledge Base query failed: {str(e)}")
+        
 
-    response_output = response['output']['text']
+def write_history_to_dynamodb(user_prompt, response_output, sql_query, response_session_id):
+    # Take in message from conversation history
+    # Augment with session id and the timestamp
+    # Write to DynamoDB
+    
+    timestamp = str(time.time())
+    
+    dynamodb_item = {
+        "id": response_session_id,
+        "timestamp": timestamp,
+        "question": user_prompt,
+        "response": response_output,
+        "sql_query": sql_query
+    }
+    
+    try:
+        config.dynamodb_table.put_item(Item=dynamodb_item)
+        config.logger.info(f"Chat history written to DynamoDB successfully.")
 
-    sql_sample = response["citations"][0]["retrievedReferences"][0]["location"]["sqlLocation"]["query"]
-
-    response_session_id = response.get('sessionId')
-
-    sql_query = "select * from sample"
-
-    return response_output, sql_sample, response_session_id 
+    except Exception as e:
+        config.logger.error(f"Failed to write chat history to DynamoDB: {str(e)}")
+        

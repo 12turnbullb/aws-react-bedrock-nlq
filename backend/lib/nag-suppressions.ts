@@ -89,7 +89,7 @@ export function addRedshiftStackSuppressions(
     },
     {
         id: 'AwsSolutions-SMG4',
-        reason: 'Secret rotation not required',
+        reason: 'Secret rotation not required for the demo environment',
     },
   ]);
 

@@ -5,7 +5,6 @@ import { Aspects } from 'aws-cdk-lib';
 import { APIStack } from "../lib/api";
 import { AuthStack } from "../lib/auth";
 import { DataStack } from "../lib/data";
-import { RedshiftStack } from "../lib/redshift";
 import { AwsSolutionsChecks, NagSuppressions } from 'cdk-nag';
 
 const app = new cdk.App();
@@ -18,10 +17,6 @@ const auth = new AuthStack(app, "AuthStack");
 
 //Create the data stack
 const data = new DataStack(app, "DataStack");
-
-const redshift = new RedshiftStack(app, "RedshiftStack", {
-  sampleDataBucket: data.sampleDataBucket,
-});
 
 //Create the API stack
 //Pass in resource context from previous stacks
