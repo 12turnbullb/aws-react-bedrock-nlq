@@ -353,7 +353,7 @@ Once you have your Bedrock Knowledge Base configured to read from your structure
 1. Navigate to the `cdk.json` file in the root of your /backend directory.
 2. Update the `nlqPipelineMode` to `KB` instead of the default `S3`.
 
-> **Note:** Setting the `nlqPipeline` variable to `S3` will use your custom text-to-SQL pipeline configure with AWS Lambda, Amazon Bedrock and Amazon Athena with the sample CSV data in Amazon S3. Setting the variable to `KB` will shift the backend logic to use your Amazon Bedrock Knowledge Base.
+> **Note:** Setting the `nlqPipeline` variable to `S3` will use your custom text-to-SQL pipeline configured with AWS Lambda, Amazon Bedrock and Amazon Athena with the sample CSV data in Amazon S3. Setting the variable to `KB` will shift the backend logic to use your Amazon Bedrock Knowledge Base.
 
 3. Navigate to your Knowledge Base in the Amazon Bedrock Console and retrieve the `Knowledge Base ID`. Paste this value in the `BedrockKnowledgeBaseId` variable in the `cdk.json` file.
 
@@ -363,13 +363,12 @@ _Sample cdk.json file_
 
 ```sh
 {
-  "app": "npx ts-node --prefer-ts-exts bin/${entrypoint:-provisioning}.ts",
+  "app": "npx ts-node --prefer-ts-exts bin/provisioning.ts",
   "context": {
     "allowedIpAddressRanges": ["0.0.0.0/1", "128.0.0.0/1"],
     "modelId": "us.anthropic.claude-3-sonnet-20240229-v1:0",
-    "nlqPipelineMode": "KB",
-    "BedrockKnowledgeBaseId": "XXXXXX",
-    "entrypoint": "provisioning"
+    "nlqPipelineMode": "KB", 
+    "BedrockKnowledgeBaseId": "XXXXXXX"
   }
 }
 ```
