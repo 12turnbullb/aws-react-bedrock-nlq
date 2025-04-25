@@ -3,7 +3,7 @@
   "context": {
     "allowedIpAddressRanges": ["0.0.0.0/1", "128.0.0.0/1"],
     "modelId": "us.anthropic.claude-3-sonnet-20240229-v1:0",
-    "nlqPipelineMode": "KB", 
-    "BedrockKnowledgeBaseId": "4PYFSEOGO5"
+    "nlqPipelineMode": "S3", 
+    "BedrockKnowledgeBaseId": ""
   }
 }
