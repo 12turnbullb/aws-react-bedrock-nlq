@@ -379,6 +379,32 @@ Follow [Step 4](#4-deploy-backend-resources) in the above insructions to redeplo
 
 Your front end will remain unchanged - continue experimenting from the Cloudfront URL deployed as an output in the `FrontendStack`!
 
+# Deleting Resources 
+
+If you've deployed the Redshift extension, you'll need to delete this stack first before deleting the remainder of the core stack. 
+
+1. Delete the `RedshiftStack` from the backend directory
+
+```bash
+cd backend
+cdk --app "npx ts-node --prefer-ts-exts bin/redshift-provisioning.ts" destroy RedshiftStack
+```
+
+2. Delete the core stacks from the backend 
+
+```bash
+cd backend
+cdk destroy --all 
+```
+
+3. Delete the front end stacks from the frontend/provisioning directory
+
+```bash
+cd frontend/provisioning 
+cdk destroy --all
+```
+> **Note:** You will need to manualy delete your Amazon Bedrock Knowledge base as this was created outside the CDK deployment. 
+
 ## License
 
 This library is licensed under the MIT-0 License. See the LICENSE file.
